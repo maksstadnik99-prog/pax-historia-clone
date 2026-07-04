@@ -170,14 +170,6 @@
             display: block;
         }
 
-        .config-block {
-            background-color: #141417;
-            border: 1px solid #232327;
-            padding: 30px;
-            border-radius: 10px;
-            color: #a1a1aa;
-        }
-
         /* ИГРОВОЙ ИНТЕРФЕЙС */
         .game-layout {
             display: flex;
@@ -260,9 +252,9 @@
             
             <h2>Продолжить игру</h2>
             <div class="games-grid">
-                <!-- Твоя реальная текущая RPG партия -->
+                <!-- Текущая ВПИ партия -->
                 <div onclick="openGame('Наша RPG Сессия', 'Pax Historia Сеттинг')" class="game-card" style="border-color: #8b0000;">
-                    <div class="image-placeholder"></div>
+                    <div class="image-placeholder" style="background-image: url('https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=500&q=80');"></div>
                     <div class="info">
                         <div class="title">Наша ВПИ Партия</div>
                         <div class="subtitle">Сеттинг: Pax Historia</div>
@@ -276,7 +268,7 @@
 
             <h2>Выбрать новый сценарий</h2>
             <div class="games-grid">
-                <!-- Кнопка-плюсик, которая редиректит на Пресеты -->
+                <!-- Плюсик -->
                 <div onclick="switchScreen('presets-screen')" class="add-card" style="width: 280px;">
                     <div style="text-align: center; padding: 20px;">
                         <span style="font-size: 1.8rem; color: #71717a; font-weight: 300;">+</span>
@@ -286,16 +278,41 @@
             </div>
         </div>
 
-        <!-- ЭКРАН 2: ПРЕСЕТЫ -->
+        <!-- ЭКРАН 2: ПРЕСЕТЫ (СТРОГО ДВА СЦЕНАРИЯ) -->
         <div id="presets-screen" class="screen">
             <h1>Пресеты сценариев</h1>
-            <div class="config-block">
-                <h2 style="margin-top: 0; font-size: 1.2rem;">Доступные шаблоны карт</h2>
-                <p>Здесь будут находиться ваши сохраненные шаблоны настроек, фракций и стартовых карт.</p>
+            <h2>Доступные стартовые эпохи</h2>
+            
+            <div class="games-grid">
+                <!-- Сценарий 1: Modern Day -->
+                <div onclick="alert('Запуск сценария Modern Day...')" class="game-card">
+                    <div class="image-placeholder" style="background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500&q=80'); filter: hue-rotate(45deg);"></div>
+                    <div class="info">
+                        <div class="title">Modern Day</div>
+                        <div class="subtitle">Наш мир. Актуальные геополитические границы и современные государства.</div>
+                        <div class="meta">
+                            <span>Карта: Земля</span>
+                            <span style="color: #34d399;">Готов</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Сценарий 2: World War 2 -->
+                <div onclick="alert('Запуск сценария World War 2...')" class="game-card">
+                    <div class="image-placeholder" style="background-image: url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=500&q=80'); filter: sepia(0.6) hue-rotate(-50deg);"></div>
+                    <div class="info">
+                        <div class="title">World War 2</div>
+                        <div class="subtitle">Глобальный конфликт XX века. Противостояние великих держав и коалиций.</div>
+                        <div class="meta">
+                            <span>Карта: Земля</span>
+                            <span style="color: #34d399;">Готов</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- ЭКРАН 3: ОКНО ИГРЫ (НАША ТЕКУЩАЯ СЕССИЯ) -->
+        <!-- ЭКРАН 3: ОКНО ИГРЫ -->
         <div id="play-screen" class="screen">
             <button class="btn-back" onclick="closeGame()">← Назад к списку игр</button>
             <h1 id="active-game-title">Название партии</h1>
