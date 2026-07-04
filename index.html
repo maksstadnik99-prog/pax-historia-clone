@@ -3,188 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бесконечная Карусель Карт</title>
-    <!-- Подключаем React и Babel напрямую для работы в одном файле -->
+    <title>Pax Historia — Военно-Политическая Игра</title>
+    <!-- Подключение React и Babel -->
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        /* Базовые стили для центрирования приложения на странице */
         body {
             margin: 0;
             padding: 0;
-            background-color: #121214;
+            background-color: #0b0c10;
+            color: #c5c6c7;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
             min-height: 100vh;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        header {
+            background-color: #1f2833;
+            padding: 15px 20px;
+            border-bottom: 2px solid #45f3ff;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(69, 243, 255, 0.1);
+        }
+        header h1 {
+            margin: 0;
+            color: #45f3ff;
+            font-size: 28px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
         }
         #root {
             width: 100%;
-            max-width: 800px;
-            padding: 20px;
-            box-sizing: border-box;
         }
     </style>
 </head>
 <body>
 
-    <div id="root"></div>
+    <header>
+        <h1>Pax Historia</h1>
+    </header>
+
+    <main>
+        <div id="root"></div>
+    </main>
 
     <script type="text/babel">
         const { useState } = React;
 
-        const App = () => {
-            // Ровно 3 карты, зацикленные по кругу. Каждая имеет свой цвет.
+        const PaxHistoriaSite = () => {
+            // Твои 3 варианта карты Pax Historia с разными стратегическими окрасками
             const maps = [
-                { id: 1, title: 'Левая карта', color: '#3b82f6' },   // Синяя
-                { id: 2, title: 'Основная карта', color: '#10b981' }, // Зеленая (Стартовый центр)
-                { id: 3, title: 'Правая карта', color: '#f59e0b' },  // Желтая
+                { id: 1, title: 'Политическая карта мира', color: '#1a237e', desc: 'Отображение границ государств и сфер влияния.' },
+                { id: 2, title: 'Основная стратегическая карта', color: '#1b5e20', desc: 'Главный экран: дислокация армий, фронты и ТВД.' },
+                { id: 3, title: 'Ресурсная карта', color: '#b71c1c', desc: 'Контроль промышленных регионов и путей снабжения.' }
             ];
 
-            // Начинаем с индекса 1 (Основная карта по центру)
+            // Начинаем с 1, чтобы Основная стратегическая карта стояла строго посередине
             const [currentIndex, setCurrentIndex] = useState(1);
 
-            // Листаем вперед
+            // Сдвиг карт вперед (вправо) по кругу
             const handleNext = () => {
                 setCurrentIndex((prevIndex) => (prevIndex + 1) % maps.length);
             };
 
-            // Листаем назад (с защитой от ухода в минус)
+            // Сдвиг карт назад (влево) по кругу без ухода в минус
             const handlePrev = () => {
                 setCurrentIndex((prevIndex) => (prevIndex - 1 + maps.length) % maps.length);
             };
 
-            // Вычисляем соседа слева (-1) и справа (+1) относительно центра
-            const getCardAt = (positionOffset) => {
-                const index = (currentIndex + positionOffset + maps.length) % maps.length;
+            // Формула бесконечного зацикливания массива из 3 элементов
+            const getCardAt = (offset) => {
+                const index = (currentIndex + offset + maps.length) % maps.length;
                 return maps[index];
             };
 
-            const leftCard = getCardAt(-1);
-            const centerCard = getCardAt(0);
-            const rightCard = getCardAt(1);
+            const leftMap = getCardAt(-1);
+            const centerMap = getCardAt(0);
+            const rightMap = getCardAt(1);
 
             return (
-                <div style={styles.container}>
-                    <h3 style={styles.title}>Бесконечная прокрутка трех карт</h3>
+                <div style={styles.dashboard}>
                     
-                    <div style={styles.carouselWrapper}>
+                    {/* Информационная панель ВПИ Pax Historia */}
+                    <div style={styles.infoPanel}>
+                        <h2>Панель Стратегического Планирования</h2>
+                        <p>Используйте карусель ниже для переключения режимов отображения. Эффект бесконечной прокрутки удерживает фокус на выбранном секторе.</p>
+                    </div>
+
+                    {/* ТРЕХКАРТОЧНАЯ ИНФИНИТИ-КАРУСЕЛЬ */}
+                    <div style={styles.carouselContainer}>
                         
-                        {/* ЛЕВАЯ КАРТА */}
-                        <div style={{ ...styles.card, ...styles.sideCard, backgroundColor: leftCard.color }}>
-                            <span style={styles.cardLabel}>{leftCard.title}</span>
+                        {/* ЛЕВАЯ КАРТА (Зацикленный сосед слева) */}
+                        <div style={{ ...styles.mapCard, ...styles.sideCard, backgroundColor: leftMap.color }}>
+                            <div style={styles.cardOverlay}>
+                                <span style={styles.sideTitle}>{leftMap.title}</span>
+                            </div>
                         </div>
 
-                        {/* ЦЕНТРАЛЬНАЯ (ОСНОВНАЯ) КАРТА */}
-                        <div style={{ ...styles.card, ...styles.mainCard, backgroundColor: centerCard.color }}>
-                            <span style={styles.mainCardLabel}>{centerCard.title}</span>
+                        {/* ЦЕНТРАЛЬНАЯ КАРТА (Основной экран твоего интерфейса) */}
+                        <div style={{ ...styles.mapCard, ...styles.mainCard, backgroundColor: centerMap.color }}>
+                            <div style={styles.mainCardContent}>
+                                <span style={styles.mainTitle}>{centerMap.title}</span>
+                                <p style={styles.mainDesc}>{centerMap.desc}</p>
+                                <div style={styles.statusBadge}>АКТИВНЫЙ РЕЖИМ</div>
+                            </div>
                         </div>
 
-                        {/* ПРАВАЯ КАРТА */}
-                        <div style={{ ...styles.card, ...styles.sideCard, backgroundColor: rightCard.color }}>
-                            <span style={styles.cardLabel}>{rightCard.title}</span>
+                        {/* ПРАВАЯ КАРТА (Зацикленный сосед справа) */}
+                        <div style={{ ...styles.mapCard, ...styles.sideCard, backgroundColor: rightMap.color }}>
+                            <div style={styles.cardOverlay}>
+                                <span style={styles.sideTitle}>{rightMap.title}</span>
+                            </div>
                         </div>
 
                     </div>
 
-                    {/* КНОПКИ УПРАВЛЕНИЯ */}
+                    {/* ИНТЕРФЕЙС ПЕРЕКЛЮЧЕНИЯ */}
                     <div style={styles.controls}>
-                        <button onClick={handlePrev} style={styles.button}>◀ Назад</button>
-                        <button onClick={handleNext} style={styles.button}>Вперед ▶</button>
+                        <button onClick={handlePrev} style={styles.navButton}>◀ Ротация влево</button>
+                        <button onClick={handleNext} style={styles.navButton}>Ротация вправо ▶</button>
                     </div>
+
+                    {/* Футер лога */}
+                    <div style={styles.logConsole}>
+                        <strong>Системный лог Pax Historia:</strong> Загружен режим [ {centerMap.title} ]. Ошибок зацикливания не обнаружено.
+                    </div>
+
                 </div>
             );
         };
 
-        // Встроенные стили интерфейса
+        // Стили интерфейса Pax Historia
         const styles = {
-            container: {
+            dashboard: {
+                width: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                padding: '30px 20px',
-                background: '#1e1e24',
-                borderRadius: '16px',
-                color: '#fff',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                alignItems: 'center'
+            },
+            infoPanel: {
                 width: '100%',
+                background: '#1f2833',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '30px',
+                borderLeft: '4px solid #45f3ff',
                 boxSizing: 'border-box'
             },
-            title: {
-                margin: '0 0 30px 0',
-                color: '#a78bfa',
-                fontSize: '22px',
-                letterSpacing: '0.5px'
-            },
-            carouselWrapper: {
+            carouselContainer: {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '20px',
+                gap: '25px',
                 width: '100%',
-                height: '300px',
-                overflow: 'hidden'
+                height: '350px',
+                overflow: 'hidden',
+                padding: '10px 0'
             },
-            card: {
+            mapCard: {
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '12px',
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 8px 25px rgba(0,0,0,0.4)',
-                userSelect: 'none'
+                borderRadius: '8px',
+                transition: 'all 0.4s cubic-bezier(0.25, 1, 0.5, 1)',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.6)',
+                position: 'relative',
+                overflow: 'hidden',
+                boxSizing: 'border-box'
             },
             mainCard: {
-                width: '45%',
+                width: '50%',
                 height: '100%',
-                zIndex: 2,
+                zIndex: 3,
                 transform: 'scale(1)',
-                border: '3px solid #ui',
-                borderColor: '#ffffff'
+                border: '3px solid #45f3ff',
             },
             sideCard: {
-                width: '25%',
+                width: '22%',
                 height: '80%',
-                opacity: 0.4,
+                opacity: 0.35,
                 zIndex: 1,
-                transform: 'scale(0.9)'
+                transform: 'scale(0.9)',
+                filter: 'blur(1px)'
             },
-            cardLabel: {
+            cardOverlay: {
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0,0,0,0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '15px'
+            },
+            mainCardContent: {
+                padding: '30px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                height: '100%',
+                width: '100%',
+                background: 'linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%)',
+                boxSizing: 'border-box'
+            },
+            mainTitle: {
+                fontSize: '22px',
+                fontWeight: 'bold',
+                color: '#45f3ff',
+                textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                marginBottom: '15px'
+            },
+            sideTitle: {
                 fontSize: '14px',
                 fontWeight: '600',
-                color: '#fff',
-                textShadow: '1px 1px 3px rgba(0,0,0,0.8)'
+                color: '#ffffff',
+                textShadow: '1px 1px 3px rgba(0,0,0,0.9)',
+                textAlign: 'center'
             },
-            mainCardLabel: {
-                fontSize: '18px',
+            mainDesc: {
+                fontSize: '15px',
+                color: '#c5c6c7',
+                lineHeight: '1.5',
+                margin: '0 0 20px 0'
+            },
+            statusBadge: {
+                alignSelf: 'flex-start',
+                padding: '5px 12px',
+                background: '#45f3ff',
+                color: '#0b0c10',
+                fontSize: '11px',
                 fontWeight: 'bold',
-                color: '#fff',
-                textShadow: '1px 1px 4px rgba(0,0,0,0.9)'
+                borderRadius: '4px',
+                letterSpacing: '1px'
             },
             controls: {
-                marginTop: '35px',
+                marginTop: '30px',
                 display: 'flex',
-                gap: '25px'
+                gap: '20px'
             },
-            button: {
-                padding: '12px 28px',
-                fontSize: '16px',
+            navButton: {
+                padding: '12px 24px',
+                fontSize: '15px',
                 fontWeight: 'bold',
-                border: 'none',
-                borderRadius: '8px',
-                backgroundColor: '#a78bfa',
-                color: '#1e1e24',
+                border: '1px solid #45f3ff',
+                borderRadius: '4px',
+                backgroundColor: '#1f2833',
+                color: '#45f3ff',
                 cursor: 'pointer',
-                boxShadow: '0 4px 10px rgba(167, 139, 250, 0.3)',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
                 transition: 'all 0.2s ease',
+            },
+            logConsole: {
+                marginTop: '40px',
+                width: '100%',
+                background: '#000',
+                padding: '12px 15px',
+                borderRadius: '6px',
+                fontFamily: 'Courier New, monospace',
+                fontSize: '13px',
+                color: '#66ff66',
+                border: '1px solid #222',
+                boxSizing: 'border-box'
             }
         };
 
-        // Рендерим приложение в корень сайта
+        // Отрисовка
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(<PaxHistoriaSite />);
     </script>
 </body>
 </html>
