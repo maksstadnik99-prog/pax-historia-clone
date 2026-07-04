@@ -115,7 +115,7 @@
 
         .game-card .image-placeholder {
             height: 150px;
-            background: linear-gradient(to top, #141417, rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=500&q=80');
+            background: linear-gradient(to top, #141417, rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500&q=80');
             background-size: cover;
             background-position: center;
         }
@@ -142,6 +142,24 @@
             color: #71717a;
             display: flex;
             justify-content: space-between;
+        }
+
+        /* Кнопка-плюсик */
+        .add-card {
+            border: 1px dashed #232327;
+            background: transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+        }
+
+        .add-card:hover {
+            border-color: #3f3f46;
+            background-color: #141417;
         }
 
         .screen {
@@ -244,7 +262,7 @@
             <div class="games-grid">
                 <!-- Твоя реальная текущая RPG партия -->
                 <div onclick="openGame('Наша RPG Сессия', 'Pax Historia Сеттинг')" class="game-card" style="border-color: #8b0000;">
-                    <div class="image-placeholder" style="background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500&q=80');"></div>
+                    <div class="image-placeholder"></div>
                     <div class="info">
                         <div class="title">Наша ВПИ Партия</div>
                         <div class="subtitle">Сеттинг: Pax Historia</div>
@@ -258,22 +276,11 @@
 
             <h2>Выбрать новый сценарий</h2>
             <div class="games-grid">
-                <!-- Чистый сценарий 1 -->
-                <div onclick="alert('Сценарий находится в разработке. Мы настроим его на следующем шаге!')" class="game-card">
-                    <div class="image-placeholder" style="filter: hue-rotate(90deg);"></div>
-                    <div class="info">
-                        <div class="title">Modern Day</div>
-                        <div class="subtitle">Наше время</div>
-                        <div class="meta"><span>Чистый старт</span></div>
-                    </div>
-                </div>
-                <!-- Чистый сценарий 2 -->
-                <div onclick="alert('Сценарий находится в разработке. Мы настроим его на следующем шаге!')" class="game-card">
-                    <div class="image-placeholder" style="filter: hue-rotate(180deg);"></div>
-                    <div class="info">
-                        <div class="title">Альтернативная История</div>
-                        <div class="subtitle">Переломный момент</div>
-                        <div class="meta"><span>Чистый старт</span></div>
+                <!-- Кнопка-плюсик, которая редиректит на Пресеты -->
+                <div onclick="switchScreen('presets-screen')" class="add-card" style="width: 280px;">
+                    <div style="text-align: center; padding: 20px;">
+                        <span style="font-size: 1.8rem; color: #71717a; font-weight: 300;">+</span>
+                        <div style="color: #71717a; font-size: 0.85rem; margin-top: 5px; font-weight: 500;">Открыть список пресетов</div>
                     </div>
                 </div>
             </div>
@@ -283,7 +290,7 @@
         <div id="presets-screen" class="screen">
             <h1>Пресеты сценариев</h1>
             <div class="config-block">
-                <h2 style="margin-top: 0; font-size: 1.2rem;">Игровые шаблоны</h2>
+                <h2 style="margin-top: 0; font-size: 1.2rem;">Доступные шаблоны карт</h2>
                 <p>Здесь будут находиться ваши сохраненные шаблоны настроек, фракций и стартовых карт.</p>
             </div>
         </div>
