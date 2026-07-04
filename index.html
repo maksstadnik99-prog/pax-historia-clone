@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
-            background-color: #09090b;
+            background-color: #09090b; /* Глубокий темный фон оригинала */
             color: #f4f4f5;
             margin: 0;
             padding: 0;
@@ -16,285 +16,222 @@
             min-height: 100vh;
         }
 
-        /* ВЕРХНЯЯ ПАНЕЛЬ (Top Nav как на оригинале) */
+        /* ЦЕНТРИРОВАННАЯ ВЕРХНЯЯ ПАНЕЛЬ */
         header {
-            height: 56px;
-            background-color: #18181b;
-            border-bottom: 1px solid #27272a;
+            height: 64px;
+            background-color: #09090b;
+            border-bottom: 1px solid #1f1f23;
             display: flex;
+            justify-content: center; /* Центрируем всё содержимое шапки */
             align-items: center;
-            padding: 0 20px;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 100;
-        }
-
-        header .logo {
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-right: 40px;
-            letter-spacing: 1px;
-            color: #fff;
+            padding: 0 20px;
         }
 
         header nav {
             display: flex;
-            gap: 10px;
+            gap: 8px;
+            background-color: #141417; /* Темная подложка для кнопок */
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid #232327;
         }
 
         header nav a {
             color: #a1a1aa;
             text-decoration: none;
-            padding: 6px 12px;
+            padding: 8px 20px;
             border-radius: 6px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 500;
             transition: 0.2s;
             cursor: pointer;
         }
 
-        header nav a:hover, header nav a.active {
-            color: #fff;
-            background-color: #27272a;
-        }
-
-        /* ОСНОВНОЙ КОНТЕЙНЕР ДЛЯ БОКОВОЙ ПАНЕЛИ И КОНТЕНТА */
-        .wrapper {
-            display: flex;
-            margin-top: 56px; /* Отступ сверху под шапку */
-            flex-grow: 1;
-        }
-
-        /* БОКОВОЕ МЕНЮ */
-        aside {
-            width: 240px;
-            background-color: #18181b;
-            border-right: 1px solid #27272a;
-            display: flex;
-            flex-direction: column;
-            padding: 20px 10px;
-            box-sizing: border-box;
-            position: fixed;
-            top: 56px;
-            bottom: 0;
-            left: 0;
-        }
-
-        aside a {
-            color: #a1a1aa;
-            text-decoration: none;
-            padding: 12px 15px;
-            border-radius: 6px;
-            margin-bottom: 5px;
-            font-size: 0.95rem;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-
-        aside a:hover, aside a.active {
-            background-color: #27272a;
+        header nav a:hover {
             color: #fff;
         }
 
-        /* ГЛАВНАЯ ОБЛАСТЬ */
-        main {
-            margin-left: 240px;
+        header nav a.active {
+            color: #fff;
+            background-color: #1f1f23; /* Активная вкладка */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        /* ОСНОВНОЙ КОНТЕНТ ПО ЦЕНТРУ ЭКРАНА */
+        .main-container {
+            margin-top: 64px; /* Отступ под шапку */
             flex-grow: 1;
-            padding: 40px;
+            padding: 40px 20px;
+            max-width: 1000px; /* Ограничиваем ширину, чтобы контент не разъезжался */
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
             box-sizing: border-box;
-            max-width: 1200px;
         }
 
         h1 {
-            font-size: 2rem;
-            font-weight: 700;
+            font-size: 1.75rem;
+            font-weight: 600;
             margin-top: 0;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             color: #fff;
         }
 
         h2 {
-            font-size: 1.4rem;
-            color: #f4f4f5;
-            margin-top: 40px;
-            margin-bottom: 20px;
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: #e4e4e7;
+            margin-top: 32px;
+            margin-bottom: 16px;
         }
 
+        /* Сетка игровых карточек */
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Карточки стали чуть крупнее и солиднее */
             gap: 20px;
         }
 
         .game-card {
-            background-color: #18181b;
-            border: 1px solid #27272a;
-            border-radius: 8px;
+            background-color: #141417;
+            border: 1px solid #232327;
+            border-radius: 10px;
             overflow: hidden;
-            transition: 0.3s;
+            transition: 0.2s ease-in-out;
             cursor: pointer;
             text-decoration: none;
             color: inherit;
         }
 
         .game-card:hover {
-            transform: translateY(-4px);
             border-color: #3f3f46;
+            background-color: #18181b;
         }
 
         .game-card .image-placeholder {
-            height: 140px;
-            background: linear-gradient(to top, #18181b, rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=400&q=80');
+            height: 150px;
+            background: linear-gradient(to top, #141417, rgba(0,0,0,0.2)), url('https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=500&q=80');
             background-size: cover;
             background-position: center;
         }
 
         .game-card .info {
-            padding: 15px;
+            padding: 16px;
         }
 
         .game-card .title {
             font-weight: 600;
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             color: #fff;
+            margin-bottom: 4px;
         }
 
         .game-card .subtitle {
             font-size: 0.85rem;
             color: #a1a1aa;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
 
         .game-card .meta {
             font-size: 0.75rem;
             color: #71717a;
+            display: flex;
+            justify-content: space-between;
         }
 
-        /* Переключение основных экранов и подвкладок */
-        .main-screen, .content-section {
+        /* Скрытие экранов */
+        .screen {
             display: none;
         }
 
-        .main-screen.active, .content-section.active {
+        .screen.active {
             display: block;
         }
 
         .config-block {
-            background-color: #18181b;
-            border: 1px solid #27272a;
-            padding: 25px;
-            border-radius: 8px;
+            background-color: #141417;
+            border: 1px solid #232327;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            color: #a1a1aa;
         }
     </style>
 </head>
 <body>
 
-    <!-- ВЕРХНЕЕ МЕНЮ (Копия оригинала) -->
+    <!-- ВЕРХНЕЕ МЕНЮ (Кнопки строго по центру) -->
     <header>
-        <div class="logo">PAX HISTORIA</div>
         <nav>
-            <a onclick="switchMainScreen('games-screen')" id="top-games" class="active">Игры</a>
-            <a onclick="switchMainScreen('presets-screen')" id="top-presets">Пресеты</a>
+            <a onclick="switchScreen('games-screen')" id="btn-games" class="active">Игры</a>
+            <a onclick="switchScreen('presets-screen')" id="btn-presets">Пресеты</a>
         </nav>
     </header>
 
-    <!-- ЭКРАН 1: ИГРЫ (Включает боковое меню и его вкладки) -->
-    <div id="games-screen" class="main-screen active">
-        <div class="wrapper">
-            <aside>
-                <a onclick="showSection('games')" id="nav-games" class="active">Ваши игры</a>
-                <a onclick="showSection('scenarios')" id="nav-scenarios">Все сценарии</a>
-                <a onclick="showSection('settings')" id="nav-settings">Настройки</a>
-            </aside>
-            <main>
-                <!-- Подвкладка: Ваши игры -->
-                <div id="section-games" class="content-section active">
-                    <h1>Ваши игры</h1>
-                    <h2>Продолжить игру</h2>
-                    <div class="games-grid">
-                        <a href="#" class="game-card">
-                            <div class="image-placeholder"></div>
-                            <div class="info">
-                                <div class="title">Transnistria</div>
-                                <div class="subtitle">Modern Day</div>
-                                <div class="meta">0 ходов • 22мин назад</div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
+    <div class="main-container">
 
-                <!-- Подвкладка: Все сценарии -->
-                <div id="section-scenarios" class="content-section">
-                    <h1>Все сценарии</h1>
-                    <div class="games-grid">
-                        <a href="#" class="game-card">
-                            <div class="image-placeholder" style="filter: hue-rotate(45deg);"></div>
-                            <div class="info">
-                                <div class="title">Modern Day</div>
-                                <div class="subtitle">Наше время</div>
-                                <div class="meta">Доступен запуск</div>
-                            </div>
-                        </a>
+        <!-- ЭКРАН 1: ИГРЫ -->
+        <div id="games-screen" class="screen active">
+            <h1>Ваши игры</h1>
+            
+            <h2>Продолжить игру</h2>
+            <div class="games-grid">
+                <!-- Карточка игры -->
+                <a href="#" class="game-card">
+                    <div class="image-placeholder"></div>
+                    <div class="info">
+                        <div class="title">Transnistria</div>
+                        <div class="subtitle">Modern Day</div>
+                        <div class="meta">
+                            <span>0 ходов</span>
+                            <span>22 мин. назад</span>
+                        </div>
                     </div>
-                </div>
+                </a>
+            </div>
 
-                <!-- Подвкладка: Настройки -->
-                <div id="section-settings" class="content-section">
-                    <h1>Настройки профиля</h1>
-                    <div class="config-block">
-                        <p>Параметры вашего аккаунта.</p>
+            <h2>Недавно начатые</h2>
+            <div class="games-grid">
+                <!-- Пустая заготовка под новую партию -->
+                <a href="#" class="game-card" style="border-style: dashed; background: transparent;">
+                    <div class="info" style="text-align: center; padding: 40px 20px;">
+                        <span style="font-size: 1.5rem; color: #71717a;">+</span>
+                        <div style="color: #71717a; font-size: 0.9rem; margin-top: 10px;">Создать новую игру</div>
                     </div>
-                </div>
-            </main>
+                </a>
+            </div>
         </div>
+
+        <!-- ЭКРАН 2: ПРЕСЕТЫ -->
+        <div id="presets-screen" class="screen">
+            <h1>Пресеты сценариев</h1>
+            <div class="config-block">
+                <p>Здесь будут находиться ваши сохраненные шаблоны настроек, фракций и стартовых карт.</p>
+            </div>
+        </div>
+
     </div>
 
-    <!-- ЭКРАН 2: ПРЕСЕТЫ (Здесь нет бокового меню, контент на весь экран) -->
-    <div id="presets-screen" class="main-screen">
-        <div class="wrapper">
-            <main style="margin-left: 0; max-width: 1000px; margin: 0 auto; padding-top: 40px;">
-                <h1>Пресеты сценариев</h1>
-                <div class="config-block">
-                    <h2>Игровые шаблоны карт и настроек</h2>
-                    <p style="color: #a1a1aa;">В этом разделе вы сможете создавать, сохранять и редактировать пресеты для быстрого старта новых ВПИ партий.</p>
-                </div>
-            </main>
-        </div>
-    </div>
-
-    <!-- Логика переключения верхних и боковых вкладок -->
+    <!-- Логика переключения между Игры и Пресеты -->
     <script>
-        // Переключение верхних экранов (Игры / Пресеты)
-        function switchMainScreen(screenId) {
-            document.querySelectorAll('.main-screen').forEach(screen => {
-                screen.classList.remove('active');
-            });
-            document.querySelectorAll('header nav a').forEach(link => {
-                link.classList.remove('active');
-            });
+        function switchScreen(screenId) {
+            // Скрываем все экраны
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            // Снимаем активность со всех кнопок в шапке
+            document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
 
+            // Активируем нужный экран и кнопку
             document.getElementById(screenId).classList.add('active');
-            
             if(screenId === 'games-screen') {
-                document.getElementById('top-games').classList.add('active');
+                document.getElementById('btn-games').classList.add('active');
             } else {
-                document.getElementById('top-presets').classList.add('active');
+                document.getElementById('btn-presets').classList.add('active');
             }
-        }
-
-        // Переключение боковых вкладок внутри "Игр"
-        function showSection(sectionId) {
-            document.querySelectorAll('#games-screen .content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.querySelectorAll('aside a').forEach(link => {
-                link.classList.remove('active');
-            });
-            
-            document.getElementById('section-' + sectionId).classList.add('active');
-            document.getElementById('nav-' + sectionId).classList.add('active');
         }
     </script>
 
