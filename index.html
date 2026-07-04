@@ -170,7 +170,7 @@
             display: block;
         }
 
-        /* ИГРОВОЙ ИНТЕРФЕЙС */
+        /* ИГРОВОЙ ИНТЕРФЕЙС С SVG КАРТОЙ */
         .game-layout {
             display: flex;
             gap: 20px;
@@ -184,8 +184,28 @@
             border-radius: 10px;
             min-height: 600px;
             height: 65vh;
-            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
             position: relative;
+        }
+
+        /* Стили интерактивных регионов на SVG карте */
+        .vpi-region {
+            transition: fill 0.2s, stroke 0.2s;
+            cursor: pointer;
+        }
+
+        .vpi-region:hover {
+            fill: #52525b !important;
+            stroke: #fff !important;
+        }
+
+        .vpi-region.selected {
+            stroke: #3b82f6 !important;
+            stroke-width: 3px !important;
         }
 
         .game-sidebar {
@@ -374,20 +394,50 @@
             <p id="active-game-scen" style="color: #a1a1aa; margin-top: -15px; margin-bottom: 30px;">Сценарий</p>
 
             <div class="game-layout">
-                <!-- ОБНОВЛЕННЫЙ БЛОК С ИНТЕРАКТИВНЫМ IFRAME -->
+                <!-- АВТОНОМНАЯ ВЕКТОРНАЯ ИНТЕРАКТИВНАЯ КАРТА МИРА (Основные регионы ВПИ) -->
                 <div class="game-map">
-                    <iframe 
-                        id="vpi-map-frame"
-                        src="https://www.paxhistoria.co/game/d8d6591c-a5c9-4a51-b19f-ef9533899338?round=1" 
-                        style="width: 100%; height: 100%; border: none; background-color: #141417;"
-                        allowfullscreen>
-                    </iframe>
+                    <svg id="vpi-vector-map" viewBox="0 0 1000 500" style="width: 100%; height: 100%;">
+                        <!-- Океан / Фон -->
+                        <rect width="1000" height="500" fill="#18181b" rx="10"/>
+                        
+                        <!-- Векторная упрощенная сетка макрорегионов мира для Pax Historia -->
+                        <!-- Северная Америка -->
+                        <path id="region-na-north" class="vpi-region" d="M100,50 L280,50 L320,120 L250,180 L100,150 Z" stroke="#09090b" stroke-width="1.5" onclick="selectRegion('Северный макрорегион (Канада/Аляска)', this)"/>
+                        <path id="region-na-usa" class="vpi-region" d="M100,150 L250,180 L300,180 L280,240 L120,240 Z" stroke="#09090b" stroke-width="1.5" onclick="selectRegion('Соединенные Штаты Америки', this)"/>
+                        
+                        <!-- Южная Америка -->
+                        <path id="region-sa" class="vpi-region" d="M180,260 L240,250 L290,320 L260,450 L200,450 L160,340 Z" stroke="#09090b" stroke-width="1.5" onclick="selectRegion('Латиноамериканский Союз', this)"/>
+                        
+                        <!-- Европа -->
+                        <path id="region-europe-west" class="vpi-region" d="M450,120 L510,100 L540,150 L480,200 L440,160 Z" stroke="#09090b" stroke-width="1.5" onclick="selectRegion('Западная Европа (Евросоюз / Рейх)', this)"/>
+                        <path id="region-europe-east" class="vpi-region" d="M540,100 L620,90 L650,160 L540,180 Z" stroke="#09090b" stroke-width="1.5" onclick="selectRegion('Восточноевропейский рубеж', this)"/>
+                        
+                        <!-- Евразия / Россия / СССР -->
+                        <path id="region-ussr-west" class="vpi-region" d="M620,90 L780,80 L750,150 L650,160 Z" stroke="#09090b" stroke-width="1.5" onclick="selectRegion('Евразийский сектор (Запад)', this)"/>
+                        <path id="region-ussr-east" class="vpi-region" d="M780,80 L950,90 L900,180 L750,150 Z" stroke="#09090b" stroke-width="1.5" onclick="selectRegion('Сибирь и Дальний Восток', this)"/>
+                        
+                        <!-- Азия -->
+                        <path id="region-china" class="vpi-region" d="M720,180 L850,180 L880,260 L760,280 L700,220 Z" stroke="#09090b" stroke-width="1.5" onclick="selectRegion('Китайская Народная Республика / Империя Мин', this)"/>
+                        <path id="region-india" class="vpi-region" d="M660,220 L720,210 L750,290 L680,310 Z" stroke="#09090b" stroke-width="1.5" onclick="selectRegion('Индостанский Субконтинент', this)"/>
+                        
+                        <!-- Ближний Восток и Африка -->
+                        <path id="region-mideast" class="vpi-region" d="M580,200 L680,190 L700,240 L600,250 Z" stroke="#09090b" stroke-width="1.5" onclick="selectRegion('Ближневосточная Коалиция', this)"/>
+                        <path id="region-africa" class="vpi-region" d="M460,240 L580,220 L620,320 L550,450 L480,400 Z" stroke="#09090b" stroke-width="1.5" onclick="selectRegion('Африканский Конфедерат', this)"/>
+                        
+                        <!-- Австралия -->
+                        <path id="region-australia" class="vpi-region" d="M820,340 L920,340 L940,420 L840,430 Z" stroke="#09090b" stroke-width="1.5" onclick="selectRegion('Австралийский Союз', this)"/>
+                    </svg>
                 </div>
 
                 <div class="game-sidebar">
                     <h3 style="margin: 0; color: #fff;">Панель управления</h3>
                     <div style="font-size: 0.9rem; color: #a1a1aa;">Статус: <strong id="game-status-text" style="color: #34d399;">Ход открыт</strong></div>
                     
+                    <!-- Информационный блок выбранного региона -->
+                    <div id="selected-country-block" style="background-color: #09090b; padding: 10px; border-radius: 6px; border: 1px solid #232327; font-size: 0.85rem; color: #a1a1aa;">
+                        📍 Выбранный регион: <strong id="selected-country-name" style="color: #fff;">Кликните по карте</strong>
+                    </div>
+
                     <hr style="border: 0; border-top: 1px solid #232327; width: 100%; margin: 5px 0;">
                     
                     <!-- Форма для ВПИ приказов -->
@@ -425,6 +475,61 @@
             }
         }
 
+        // Интерактивный клик по региону карты
+        function selectRegion(name, element) {
+            document.querySelectorAll('.vpi-region').forEach(r => r.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('selected-country-name').innerText = name;
+        }
+
+        // Перекраска карты в зависимости от выбранной исторической эпохи
+        function colorizeMapForScenario(scenario) {
+            const regions = {
+                'na-north': document.getElementById('region-na-north'),
+                'usa': document.getElementById('region-na-usa'),
+                'sa': document.getElementById('region-sa'),
+                'eu-west': document.getElementById('region-europe-west'),
+                'eu-east': document.getElementById('region-europe-east'),
+                'ussr-w': document.getElementById('region-ussr-west'),
+                'ussr-e': document.getElementById('region-ussr-east'),
+                'china': document.getElementById('region-china'),
+                'india': document.getElementById('region-india'),
+                'mideast': document.getElementById('region-mideast'),
+                'africa': document.getElementById('region-africa'),
+                'australia': document.getElementById('region-australia')
+            };
+
+            if (scenario.includes('World War 2')) {
+                // Мрачные военно-политические блоки ВМВ
+                if(regions['usa']) regions['usa'].style.fill = '#1e3a8a';
+                if(regions['na-north']) regions['na-north'].style.fill = '#1e3a8a';
+                if(regions['ussr-w']) regions['ussr-w'].style.fill = '#991b1b';
+                if(regions['ussr-e']) regions['ussr-e'].style.fill = '#991b1b';
+                if(regions['eu-west']) regions['eu-west'].style.fill = '#27272a'; // Страны Оси
+                if(regions['eu-east']) regions['eu-east'].style.fill = '#3f3f46';
+                if(regions['china']) regions['china'].style.fill = '#854d0e';
+                if(regions['sa']) regions['sa'].style.fill = '#2e2e33';
+                if(regions['india']) regions['india'].style.fill = '#1e3a8a';
+                if(regions['mideast']) regions['mideast'].style.fill = '#4c1d95';
+                if(regions['africa']) regions['africa'].style.fill = '#3f3f46';
+                if(regions['australia']) regions['australia'].style.fill = '#1e3a8a';
+            } else {
+                // Яркие геополитические цвета Modern Day
+                if(regions['usa']) regions['usa'].style.fill = '#2563eb';
+                if(regions['na-north']) regions['na-north'].style.fill = '#3b82f6';
+                if(regions['ussr-w']) regions['ussr-w'].style.fill = '#dc2626';
+                if(regions['ussr-e']) regions['ussr-e'].style.fill = '#ef4444';
+                if(regions['eu-west']) regions['eu-west'].style.fill = '#10b981';
+                if(regions['eu-east']) regions['eu-east'].style.fill = '#34d399';
+                if(regions['china']) regions['china'].style.fill = '#d97706';
+                if(regions['sa']) regions['sa'].style.fill = '#6366f1';
+                if(regions['india']) regions['india'].style.fill = '#a855f7';
+                if(regions['mideast']) regions['mideast'].style.fill = '#06b6d4';
+                if(regions['africa']) regions['africa'].style.fill = '#f59e0b';
+                if(regions['australia']) regions['australia'].style.fill = '#3b82f6';
+            }
+        }
+
         function openGame(name, scenario) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('main-header').style.display = 'none';
@@ -432,6 +537,7 @@
             document.getElementById('active-game-scen').innerText = "Текущий режим: " + scenario;
             
             document.getElementById('order-input').value = '';
+            document.getElementById('selected-country-name').innerText = 'Кликните по карте';
             document.getElementById('game-status-text').innerText = 'Ход открыт';
             document.getElementById('game-status-text').style.color = '#34d399';
             document.getElementById('orders-log-container').innerHTML = `
@@ -439,6 +545,10 @@
                     История пуста. Напишите свой первый приказ выше!
                 </div>
             `;
+
+            // Убираем старые выделения и красим карту под нужную эпоху
+            document.querySelectorAll('.vpi-region').forEach(r => r.classList.remove('selected'));
+            colorizeMapForScenario(scenario);
 
             document.getElementById('play-screen').classList.add('active');
         }
@@ -480,6 +590,7 @@
             const input = document.getElementById('order-input');
             const logContainer = document.getElementById('orders-log-container');
             const statusText = document.getElementById('game-status-text');
+            const regionName = document.getElementById('selected-country-name').innerText;
             
             if (input.value.trim() === '') {
                 alert('Пожалуйста, напишите текст приказа перед отправкой!');
@@ -493,10 +604,13 @@
             const now = new Date();
             const timeString = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
             
+            // Добавляем к приказу информацию о том, для какого региона он отдан
+            const targetRegionText = regionName !== 'Кликните по карте' ? ` • Регион: ${regionName}` : '';
+
             const orderItem = document.createElement('div');
             orderItem.className = 'order-item';
             orderItem.innerHTML = `
-                <div class="time">Сегодня в ${timeString} • Приказ отправлен</div>
+                <div class="time">Сегодня в ${timeString}${targetRegionText}</div>
                 <div style="color: #e4e4e7; line-height: 1.4;">${input.value.replace(/\n/g, '<br>')}</div>
             `;
 
