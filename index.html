@@ -3,146 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pax Historia — Военно-Политическая Игра</title>
+    <title>Игры - Pax Historia</title>
     <style>
+        /* Базовые стили из оригинального кода (bg-background, text-zinc-100) */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
+            font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+            background-color: #09090b; /* Глубокий темный фон zinc-950 */
+            color: #f4f4f5; /* Светлый текст zinc-100 */
             margin: 0;
             padding: 0;
-            background-color: #1a1a1a;
-            color: #e0e0e0;
+            display: flex;
+            min-height: 100vh;
         }
-        header {
-            background-color: #111;
-            color: #fff;
-            padding: 20px 0;
-            text-align: center;
-            border-bottom: 3px solid #8b0000;
+
+        /* Боковое меню (Sidebar) */
+        aside {
+            width: 240px;
+            background-color: #18181b; /* Цвет блоков zinc-800/900 */
+            border-right: 1px solid #27272a;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 10px;
+            box-sizing: border-box;
         }
-        header h1 {
-            margin: 0;
-            font-size: 2.5em;
-            letter-spacing: 2px;
-        }
-        nav {
-            background-color: #222;
-            text-align: center;
+
+        aside .logo {
+            font-weight: bold;
+            font-size: 1.2rem;
             padding: 10px;
-        }
-        nav a {
-            color: #aaa;
-            text-decoration: none;
-            padding: 10px 20px;
-            margin: 0 5px;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-        nav a:hover {
+            margin-bottom: 20px;
+            letter-spacing: 1px;
             color: #fff;
-            background-color: #8b0000;
-            border-radius: 4px;
+            border-bottom: 1px solid #27272a;
         }
-        .container {
-            max-width: 900px;
-            margin: 30px auto;
-            padding: 20px;
-            background-color: #262626;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        h2 {
-            color: #ff4d4d;
-            border-bottom: 1px solid #444;
-            padding-bottom: 10px;
-        }
-        .rules-list, .lore-section {
-            margin-bottom: 30px;
-        }
-        ul, ol {
-            padding-left: 20px;
-        }
-        li {
-            margin-bottom: 10px;
-        }
-        .btn-join {
-            display: inline-block;
-            background-color: #8b0000;
-            color: white;
-            padding: 12px 25px;
+
+        aside a {
+            color: #a1a1aa;
             text-decoration: none;
-            font-weight: bold;
-            border-radius: 5px;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+
+        aside a:hover, aside a.active {
+            background-color: #27272a;
+            color: #fff;
+        }
+
+        /* Главная рабочая область */
+        main {
+            flex-grow: 1;
+            padding: 40px;
+            box-sizing: border-box;
+            max-width: 1200px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            color: #f4f4f5;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        /* Сетка для игровых карточек */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        /* Стили карточки игры, как на скриншоте */
+        .game-card {
+            background-color: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            overflow: hidden;
             transition: 0.3s;
-            margin-top: 15px;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
         }
-        .btn-join:hover {
-            background-color: #ff4d4d;
-            box-shadow: 0 0 10px #ff4d4d;
+
+        .game-card:hover {
+            transform: translateY(-4px);
+            border-color: #3f3f46;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
         }
-        footer {
-            text-align: center;
-            padding: 20px;
-            background-color: #111;
-            color: #666;
-            font-size: 0.9em;
-            margin-top: 5px;
+
+        .game-card .image-placeholder {
+            height: 140px;
+            background: linear-gradient(to top, #18181b, rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=400&q=80'); /* Временный неоновый фон городов */
+            background-size: cover;
+            background-position: center;
+        }
+
+        .game-card .info {
+            padding: 15px;
+        }
+
+        .game-card .title {
+            font-weight: 600;
+            font-size: 1.05rem;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .game-card .subtitle {
+            font-size: 0.85rem;
+            color: #a1a1aa;
+            margin-bottom: 12px;
+        }
+
+        .game-card .meta {
+            font-size: 0.75rem;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>PAX HISTORIA</h1>
-        <p>Текстовая военно-политическая ролевая игра</p>
-    </header>
+    <!-- Левое меню, как в оригинале -->
+    <aside>
+        <div class="logo">PAX HISTORIA</div>
+        <a href="#" class="active">Ваши игры</a>
+        <a href="#">Все сценарии</a>
+        <a href="#">Правила ВПИ</a>
+        <a href="#">Лор и Фракции</a>
+        <a href="#">Настройки</a>
+    </aside>
 
-    <nav>
-        <a href="#about">О проекте</a>
-        <a href="#rules">Правила</a>
-        <a href="#lore">Лор</a>
-        <a href="#start">Как начать</a>
-    </nav>
+    <!-- Основной контент -->
+    <main>
+        <h1>Ваши игры</h1>
 
-    <div class="container">
-        <section id="about">
-            <h2>🌍 О проекте</h2>
-            <p>Добро пожаловать на официальный сайт **Pax Historia**! Это масштабная ВПИ (военно-политическая игра), в которой каждый участник может примерить на себя роль лидера государства. Управляйте экономикой, развивайте армию, плетите дипломатические интриги и меняйте ход истории в реальном времени.</p>
-        </section>
+        <h2>Продолжить игру</h2>
+        <div class="games-grid">
+            <!-- Карточка Транснистрии со скриншота -->
+            <a href="#" class="game-card">
+                <div class="image-placeholder"></div>
+                <div class="info">
+                    <div class="title">Transnistria</div>
+                    <div class="subtitle">Modern Day</div>
+                    <div class="meta">0 ходов • 22мин назад</div>
+                </div>
+            </a>
+        </div>
 
-        <section id="rules" class="rules-list">
-            <h2>📜 Основные правила</h2>
-            <ol>
-                <li><strong>Уважение участников:</strong> Любые оскорбления игроков или администрации строго запрещены. Конфликты решаются через главных судей проекта.</li>
-                <li><strong>Исторический реализм:</strong> Все ваши реформы, приказы и военные планы должны быть логичными и соответствовать технологиям и эпохе игры.</li>
-                <li><strong>Сдача ходов:</strong> Игровые приказы отправляются в установленный срок. Пропуск хода без предупреждения может повлечь штрафы для государства.</li>
-            </ol>
-        </section>
-
-        <section id="lore" class="lore-section">
-            <h2>📚 Мировой Лор</h2>
-            <p>Действие игры разворачивается в альтернативной реальности. Привычный ход истории был нарушен ключевым событием, перекроившим границы крупнейших держав.</p>
-            <ul>
-                <li><strong>Первая Сверхдержава:</strong> Государство с мощным промышленным потенциалом, стремящееся закрепить свое влияние на континенте.</li>
-                <li><strong>Вторая Фракция:</strong> Коалиция молодых республик, отстаивающая свои экономические интересы и независимость.</li>
-            </ul>
-        </section>
-
-        <section id="start">
-            <h2>🎮 Как начать играть?</h2>
-            <p>Чтобы занять государство и сделать свой первый шаг к мировому господству, выполните три простых действия:</p>
-            <ul>
-                <li>Изучите подробные правила в нашем сообществе.</li>
-                <li>Выберите свободную страну на актуальной политической карте мира.</li>
-                <li>Заполните и отправьте анкету лидера.</li>
-            </ul>
-            <a href="#" class="btn-join">Присоединиться к игре</a>
-        </section>
-    </div>
-
-    <footer>
-        <p>&copy; 2026 Pax Historia Clone. Все права защищены. Создано с помощью ИИ.</p>
-    </footer>
+        <h2>Недавно начатые</h2>
+        <div class="games-grid">
+            <a href="#" class="game-card">
+                <div class="image-placeholder" style="filter: hue-rotate(90deg);"></div>
+                <div class="info">
+                    <div class="title">Новая партия</div>
+                    <div class="subtitle">Альтернативная история</div>
+                    <div class="meta">Создано недавно</div>
+                </div>
+            </a>
+        </div>
+    </main>
 
 </body>
 </html>
