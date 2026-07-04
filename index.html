@@ -253,7 +253,7 @@
             font-size: 0.9rem;
             z-index: 100;
             backdrop-filter: blur(8px);
-            pointer-events: none; /* Чтобы не мешал кликам по карте */
+            pointer-events: none;
             display: none;
         }
 
@@ -421,7 +421,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map;
-        let geojsonLayer; // Слой политических границ
+        let geojsonLayer;
         
         let sessions = JSON.parse(localStorage.getItem('vpi_sessions')) || [
             { id: 1, name: 'Наша ВПИ Партия Основная', preset: 'Modern Day', img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500&q=80', turn: 1 }
@@ -546,87 +546,109 @@
             }
         }
 
-        // Инициализация базовой карты
+        // ИНИЦИАЛИЗАЦИЯ С БЕСКОНЕЧНЫМ СКРОЛЛОМ ВЛЕВО И ВПРАВО
         function initMap() {
             if (!map) {
-                const southWest = L.latLng(-85, -3600);
-                const northEast = L.latLng(85, 3600);
-                const bounds = L.latLngBounds(southWest, northEast);
-
                 map = L.map('map-container', {
                     center: [30, 0],
                     zoom: 2,
                     minZoom: 2,
                     maxZoom: 6,
-                    maxBounds: bounds,
-                    maxBoundsViscosity: 1.0,
-                    worldCopyJump: true
+                    worldCopyJump: true, // Плавный перенос объектов при прокрутке мира
+                    bounceAtZoomLimits: false
                 });
+                
+                // Ограничиваем скролл только по вертикали (чтобы не улетать за полюса)
+                map.setMaxBounds([[-85, -180], [85, 180]]); 
             }
         }
 
-        // РАЗУКРАШИВАНИЕ КАРТЫ СТРАН С ПОМОЩЬЮ GEOJSON
+        // РАЗУКРАШИВАНИЕ СТРАН В СТРАТЕГИЧЕСКИЕ ЦВЕТА
         function updateMapStyle() {
-            map.eachLayer(layer => map.removeLayer(layer));
+            map.eachLayer(layer => {
+                if (layer instanceof L.TileLayer || layer instanceof L.GeoJSON) {
+                    map.removeLayer(layer);
+                }
+            });
 
-            // Базовый черный океан без делений
+            // Бесшовный темный океан
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-                noWrap: false
+                noWrap: false // Позволяет океану циклично повторяться
             }).addTo(map);
 
-            // Генератор случайного, но стабильного цвета по названию страны (чтобы у каждой фракции был свой цвет)
+            // Фиксированные цвета для ключевых государств (палитра HOI4 / ВПИ)
+            const countryColors = {
+                "Russia": "#b16950",
+                "Russian Federation": "#b16950",
+                "United States of America": "#3b6a9e",
+                "United States": "#3b6a9e",
+                "China": "#c28d38",
+                "United Kingdom": "#a33535",
+                "France": "#3c7e7b",
+                "Germany": "#525252",
+                "Italy": "#4c7c5d",
+                "Japan": "#af9f84",
+                "Canada": "#bd4b4b",
+                "Brazil": "#3f7a4d",
+                "Australia": "#2a4d7c",
+                "India": "#b97c38",
+                "Ukraine": "#b5b043",
+                "Kazakhstan": "#4aa7b5",
+                "Belarus": "#4c6e4f"
+            };
+
             function getCountryColor(name) {
+                if (countryColors[name]) {
+                    return countryColors[name];
+                }
+                // Для малых стран подбираем мягкие пастельные оттенки
                 let hash = 0;
                 for (let i = 0; i < name.length; i++) {
                     hash = name.charCodeAt(i) + ((hash << 5) - hash);
                 }
-                const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-                return "#" + "00000".substring(0, 6 - c.length) + c;
+                const hue = Math.abs(hash % 360);
+                return `hsl(${hue}, 40%, 40%)`;
             }
 
-            // Функция стилизации границ и заливки стран
             function styleCountry(feature) {
-                const countryName = feature.properties.name || "Неизвестно";
+                const countryName = feature.properties.name || "Unknown";
                 return {
-                    fillColor: getCountryColor(countryName), // Цвет страны
-                    weight: 1.5,                             // Толщина границ
-                    opacity: 1,                              // Прозрачность границ
-                    color: '#1e293b',                        // Цвет линий границ (темно-серый)
-                    fillOpacity: 0.55                         // Прозрачность заливки фракций
+                    fillColor: getCountryColor(countryName),
+                    weight: 1.2,
+                    opacity: 1,
+                    color: '#18181b', // Темные четкие границы
+                    fillOpacity: 0.6
                 };
             }
 
-            // Эффекты при наведении мыши на страну
             function onEachFeature(feature, layer) {
                 layer.on({
                     mouseover: function (e) {
                         const layer = e.target;
                         layer.setStyle({
-                            fillOpacity: 0.85,      // Делаем страну ярче при наведении
+                            fillOpacity: 0.85,
                             weight: 2,
-                            color: '#fff'           // Белая граница фокуса
+                            color: '#fff' // Подсветка границ при наведении
                         });
                         if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
                             layer.bringToFront();
                         }
                         
-                        // Показываем плашку с названием страны в левом нижнем углу
                         const name = feature.properties.name || "Unknown";
                         document.getElementById('country-badge-name').innerText = name;
                         document.getElementById('country-badge').style.display = 'block';
                     },
                     mouseout: function (e) {
-                        geojsonLayer.resetStyle(e.target); // Возвращаем стандартный цвет
-                        document.getElementById('country-badge').style.display = 'none'; // Скрываем плашку
+                        geojsonLayer.resetStyle(e.target);
+                        document.getElementById('country-badge').style.display = 'none';
                     },
                     click: function (e) {
-                        // Камера центрируется на выбранном государстве при клике
                         map.panTo(e.latlng);
                     }
                 });
             }
 
-            // Подгружаем гео-карту мира низкого разрешения (чтобы загружалась мгновенно на любом интернете)
+            // Быстрая загрузка карты
             fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
                 .then(response => response.json())
                 .then(data => {
