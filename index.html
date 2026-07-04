@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
-            background-color: #09090b; /* Глубокий темный фон оригинала */
+            background-color: #09090b; 
             color: #f4f4f5;
             margin: 0;
             padding: 0;
@@ -22,7 +22,7 @@
             background-color: #09090b;
             border-bottom: 1px solid #1f1f23;
             display: flex;
-            justify-content: center; /* Центрируем всё содержимое шапки */
+            justify-content: center; 
             align-items: center;
             position: fixed;
             top: 0;
@@ -35,7 +35,7 @@
         header nav {
             display: flex;
             gap: 8px;
-            background-color: #141417; /* Темная подложка для кнопок */
+            background-color: #141417; 
             padding: 4px;
             border-radius: 8px;
             border: 1px solid #232327;
@@ -58,18 +58,18 @@
 
         header nav a.active {
             color: #fff;
-            background-color: #1f1f23; /* Активная вкладка */
+            background-color: #1f1f23; 
             box-shadow: 0 1px 3px rgba(0,0,0,0.5);
         }
 
-        /* ОСНОВНОЙ КОНТЕНТ ПО ЦЕНТРУ ЭКРАНА */
+        /* ИСПРАВЛЕННЫЙ КОНТЕНТ (Выравнивание по левому краю) */
         .main-container {
-            margin-top: 64px; /* Отступ под шапку */
+            margin-top: 64px; 
             flex-grow: 1;
-            padding: 40px 20px;
-            max-width: 1000px; /* Ограничиваем ширину, чтобы контент не разъезжался */
+            padding: 40px 40px; /* Увеличили боковой отступ для красоты */
             width: 100%;
-            margin-left: auto;
+            max-width: 1400px; /* Расширили максимальную ширину, чтобы сетка влево уходила свободнее */
+            margin-left: 0; /* Убрали auto, теперь блок не центрируется */
             margin-right: auto;
             box-sizing: border-box;
         }
@@ -80,6 +80,7 @@
             margin-top: 0;
             margin-bottom: 24px;
             color: #fff;
+            text-align: left; /* Строго влево */
         }
 
         h2 {
@@ -88,13 +89,15 @@
             color: #e4e4e7;
             margin-top: 32px;
             margin-bottom: 16px;
+            text-align: left; /* Строго влево */
         }
 
         /* Сетка игровых карточек */
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Карточки стали чуть крупнее и солиднее */
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
             gap: 20px;
+            justify-content: start; /* Карточки заполняются слева направо */
         }
 
         .game-card {
@@ -158,14 +161,14 @@
             border: 1px solid #232327;
             padding: 30px;
             border-radius: 10px;
-            text-align: center;
+            text-align: left; /* В пресетах текст тоже ушел влево */
             color: #a1a1aa;
         }
     </style>
 </head>
 <body>
 
-    <!-- ВЕРХНЕЕ МЕНЮ (Кнопки строго по центру) -->
+    <!-- ВЕРХНЕЕ МЕНЮ (Кнопки по центру) -->
     <header>
         <nav>
             <a onclick="switchScreen('games-screen')" id="btn-games" class="active">Игры</a>
@@ -176,7 +179,7 @@
     <div class="main-container">
 
         <!-- ЭКРАН 1: ИГРЫ -->
-        <div id="games-screen" class="screen active">
+        <div id="section-games" class="screen active">
             <h1>Ваши игры</h1>
             
             <h2>Продолжить игру</h2>
@@ -211,6 +214,7 @@
         <div id="presets-screen" class="screen">
             <h1>Пресеты сценариев</h1>
             <div class="config-block">
+                <h2 style="margin-top: 0;">Игровые шаблоны</h2>
                 <p>Здесь будут находиться ваши сохраненные шаблоны настроек, фракций и стартовых карт.</p>
             </div>
         </div>
@@ -220,16 +224,14 @@
     <!-- Логика переключения между Игры и Пресеты -->
     <script>
         function switchScreen(screenId) {
-            // Скрываем все экраны
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            // Снимаем активность со всех кнопок в шапке
             document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
 
-            // Активируем нужный экран и кнопку
-            document.getElementById(screenId).classList.add('active');
             if(screenId === 'games-screen') {
+                document.getElementById('section-games').classList.add('active');
                 document.getElementById('btn-games').classList.add('active');
             } else {
+                document.getElementById('presets-screen').classList.add('active');
                 document.getElementById('btn-presets').classList.add('active');
             }
         }
