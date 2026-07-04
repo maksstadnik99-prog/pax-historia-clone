@@ -318,6 +318,7 @@
         }
         .order-item .time { color: #71717a; font-size: 0.7rem; margin-bottom: 2px; }
         
+        /* Прячем стандартные кнопки зума, чтобы интерфейс стратегии выглядел чисто */
         .leaflet-control-zoom, .leaflet-control-attribution {
             display: none !important;
         }
@@ -347,7 +348,7 @@
         <!-- ЭКРАН 1: СПИСОК ИГР -->
         <div id="section-games" class="screen active">
             <div class="scrollable-content">
-                <h1>Ваши active партии</h1>
+                <h1>Ваши активные партии</h1>
                 
                 <h2>Продолжить текущую сессию</h2>
                 <div class="games-grid" id="last-session-container"></div>
@@ -417,7 +418,7 @@
 
     </div>
 
-    <!-- Скрипты карты Leaflet.js и вспомогательного плагина для зацикливания векторов -->
+    <!-- Библиотека Leaflet.js -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map;
@@ -546,26 +547,26 @@
             }
         }
 
-        // ИНИЦИАЛИЗАЦИЯ КАРТЫ С КОМФОРТНЫМ ОТДАЛЕНИЕМ И БЕЗГРАНИЧНЫМ КРУЧЕНИЕМ
+        // ИНИЦИАЛИЗАЦИЯ ИСТИННО ЗАЦИКЛЕННОЙ КАРТЫ С КОМФОРТНЫМ ОТДАЛЕНИЕМ
         function initMap() {
             if (!map) {
                 map = L.map('map-container', {
                     center: [20, 0],
                     zoom: 3,
-                    minZoom: 2.5, // Вернули твой исходный масштаб отдаления камеры
+                    minZoom: 2.2, // Исходное комфортное отдаление, чтобы видеть карту целиком
                     maxZoom: 6,
-                    worldCopyJump: false, // Отключаем старый прыжок, так как теперь отрисовка идет через симуляцию проекции на новые витки
+                    worldCopyJump: true, // КЛЮЧЕВОЙ ПАРАМЕТР: Leaflet сам незаметно переносит слой на новые витки!
                     inertia: true,
                     inertiaDelay: 50,
                     bounceAtZoomLimits: false
                 });
                 
-                // Ограничиваем карту только сверху и снизу (чтобы не улетать в космос на полюсах)
-                map.setMaxBounds([[-85, -1000], [85, 1000]]); 
+                // Фиксируем карту сверху и снизу по полюсам (от -85 до 85 широты), чтобы она не улетала вверх и вниз
+                map.setMaxBounds([[-85, -180], [85, 180]]);
             }
         }
 
-        // РАЗУКРАШИВАНИЕ СТРАН В СТРАТЕГИЧЕСКИЕ ЦВЕТА
+        // ОТРИСОВКА ЦВЕТОВ И БЕСКОНЕЧНОГО ОКЕАНА
         function updateMapStyle() {
             map.eachLayer(layer => {
                 if (layer instanceof L.TileLayer || layer instanceof L.GeoJSON) {
@@ -573,12 +574,12 @@
                 }
             });
 
-            // Бесшовный бесконечный темный океан
+            // Истинный бесшовный бесконечный темный океан
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
                 noWrap: false
             }).addTo(map);
 
-            // Фиксированные цвета для ключевых государств (палитра HOI4 / ВПИ)
+            // Историческая палитра цветов государств
             const countryColors = {
                 "Russia": "#b16950",
                 "Russian Federation": "#b16950",
@@ -600,9 +601,7 @@
             };
 
             function getCountryColor(name) {
-                if (countryColors[name]) {
-                    return countryColors[name];
-                }
+                if (countryColors[name]) return countryColors[name];
                 let hash = 0;
                 for (let i = 0; i < name.length; i++) {
                     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -625,14 +624,14 @@
             function onEachFeature(feature, layer) {
                 layer.on({
                     mouseover: function (e) {
-                        const layer = e.target;
-                        layer.setStyle({
+                        const targetLayer = e.target;
+                        targetLayer.setStyle({
                             fillOpacity: 0.85,
                             weight: 2,
                             color: '#fff' 
                         });
                         if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-                            layer.bringToFront();
+                            targetLayer.bringToFront();
                         }
                         
                         const name = feature.properties.name || "Unknown";
@@ -649,30 +648,11 @@
                 });
             }
 
-            // Загрузка GeoJSON и умное дублирование векторов на соседние витки карты мира
+            // Загрузка оригинального GeoJSON карты мира
             fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
                 .then(response => response.json())
                 .then(data => {
-                    // Создаем копии геометрии для 3-х витков планеты (Центр, Слева, Справа), 
-                    // чтобы цвета никогда не пропадали при прокрутке в любую сторону
-                    let wrappedData = JSON.parse(JSON.stringify(data)); 
-                    let leftCopy = JSON.parse(JSON.stringify(data));
-                    let rightCopy = JSON.parse(JSON.stringify(data));
-
-                    function shiftCoords(coords, degrees) {
-                        if (typeof coords[0] === 'number') {
-                            coords[0] += degrees;
-                        } else {
-                            coords.forEach(c => shiftCoords(c, degrees));
-                        }
-                    }
-
-                    leftCopy.features.forEach(f => shiftCoords(f.geometry.coordinates, -360));
-                    rightCopy.features.forEach(f => shiftCoords(f.geometry.coordinates, 360));
-
-                    wrappedData.features = wrappedData.features.concat(leftCopy.features, rightCopy.features);
-
-                    geojsonLayer = L.geoJSON(wrappedData, {
+                    geojsonLayer = L.geoJSON(data, {
                         style: styleCountry,
                         onEachFeature: onEachFeature
                     }).addTo(map);
