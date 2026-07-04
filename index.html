@@ -546,20 +546,22 @@
             }
         }
 
-        // ИНИЦИАЛИЗАЦИЯ С БЕСКОНЕЧНЫМ СКРОЛЛОМ ВЛЕВО И ВПРАВО
+        // ИНИЦИАЛИЗАЦИЯ КАРТЫ С ФИКСОМ ДЁРГАНИЯ
         function initMap() {
             if (!map) {
                 map = L.map('map-container', {
-                    center: [30, 0],
-                    zoom: 2,
-                    minZoom: 2,
+                    center: [20, 0],
+                    zoom: 3,
+                    minZoom: 2.5, // ФИКС: Ограничиваем максимальное отдаление, чтобы слои GeoJSON не дергались
                     maxZoom: 6,
-                    worldCopyJump: true, // Плавный перенос объектов при прокрутке мира
+                    worldCopyJump: true, // Включаем плавный прыжок элементов через границы мира
+                    inertia: true,       // Плавное скольжение карты
+                    inertiaDelay: 50,
                     bounceAtZoomLimits: false
                 });
                 
-                // Ограничиваем скролл только по вертикали (чтобы не улетать за полюса)
-                map.setMaxBounds([[-85, -180], [85, 180]]); 
+                // Ограничиваем карту по вертикали (полюса) и задаем комфортный лимит по бокам
+                map.setMaxBounds([[-80, -300], [80, 300]]); 
             }
         }
 
@@ -573,7 +575,8 @@
 
             // Бесшовный темный океан
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-                noWrap: false // Позволяет океану циклично повторяться
+                noWrap: false,
+                bounds: [[-90, -180], [90, 180]]
             }).addTo(map);
 
             // Фиксированные цвета для ключевых государств (палитра HOI4 / ВПИ)
@@ -628,7 +631,7 @@
                         layer.setStyle({
                             fillOpacity: 0.85,
                             weight: 2,
-                            color: '#fff' // Подсветка границ при наведении
+                            color: '#fff' // Подсветка при наведении
                         });
                         if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
                             layer.bringToFront();
@@ -648,7 +651,7 @@
                 });
             }
 
-            // Быстрая загрузка карты
+            // Загрузка GeoJSON данных
             fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
                 .then(response => response.json())
                 .then(data => {
