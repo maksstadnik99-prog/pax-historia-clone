@@ -301,18 +301,15 @@
         <!-- ЭКРАН 1: СПИСОК ИГР -->
         <div id="section-games" class="screen active">
             <div class="scrollable-content">
-                <h1>Ваши active партии</h1>
+                <h1>Ваши активные партии</h1>
+                
                 <h2>Продолжить текущую сессию</h2>
-                <div class="games-grid" id="active-sessions-grid">
-                    <div onclick="openGame('Наша ВПИ Партия', 'Modern Day')" class="game-card" style="border-color: #7c3aed;">
-                        <div class="image-placeholder" style="background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500&q=80');"></div>
-                        <div class="info">
-                            <div class="title">Наша ВПИ Партия</div>
-                            <div class="subtitle">Режим: Modern Day</div>
-                            <div class="meta"><span>Ход №1</span><span style="color: #34d399;">Активен</span></div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Сюда JS выведет ОДНУ самую последнюю запущенную партию -->
+                <div class="games-grid" id="last-session-container"></div>
+
+                <h2>Все созданные сессии</h2>
+                <!-- Сюда JS выведет вообще все сессии, которые ты насоздавал -->
+                <div class="games-grid" id="all-sessions-grid" style="margin-bottom: 32px;"></div>
 
                 <h2>Создать новую сессию</h2>
                 <div class="games-grid">
@@ -377,10 +374,84 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map;
+        
+        // База данных сессий (подгружается из памяти браузера)
+        let sessions = JSON.parse(localStorage.getItem('vpi_sessions')) || [
+            { id: 1, name: 'Наша ВПИ Партия Основная', preset: 'Modern Day', img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500&q=80', turn: 1 }
+        ];
+        
+        let lastActiveSessionId = localStorage.getItem('vpi_last_session_id') || null;
+        let currentScreen = localStorage.getItem('vpi_current_screen') || 'section-games';
+
+        // Инициализация при старте страницы
+        window.onload = function() {
+            renderSessions();
+            
+            // Восстанавливаем состояние экрана, на котором пользователь был до F5
+            if (currentScreen === 'play-screen' && lastActiveSessionId) {
+                const session = sessions.find(s => s.id == lastActiveSessionId);
+                if (session) {
+                    openGame(session.name, session.preset, session.id);
+                } else {
+                    switchScreen('section-games');
+                }
+            } else {
+                switchScreen(currentScreen);
+            }
+        };
+
+        function saveToStorage() {
+            localStorage.setItem('vpi_sessions', JSON.stringify(sessions));
+            localStorage.setItem('vpi_last_session_id', lastActiveSessionId);
+            localStorage.setItem('vpi_current_screen', currentScreen);
+        }
+
+        function renderSessions() {
+            const allGrid = document.getElementById('all-sessions-grid');
+            const lastContainer = document.getElementById('last-session-container');
+            
+            allGrid.innerHTML = '';
+            lastContainer.innerHTML = '';
+
+            // 1. Выводим список ВСЕХ созданных сессий
+            sessions.forEach(session => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                if (lastActiveSessionId == session.id) card.style.borderColor = '#7c3aed';
+                card.onclick = function() { openGame(session.name, session.preset, session.id); };
+                card.innerHTML = `
+                    <div class="image-placeholder" style="background-image: url('${session.img}');"></div>
+                    <div class="info">
+                        <div class="title">${session.name}</div>
+                        <div class="subtitle">Режим: ${session.preset}</div>
+                        <div class="meta"><span>Ход №${session.turn}</span><span style="color: #34d399;">Готова</span></div>
+                    </div>
+                `;
+                allGrid.appendChild(card);
+            });
+
+            // 2. Выводим ПОСЛЕДНЮЮ активную сессию в верхний блок
+            const lastSession = sessions.find(s => s.id == lastActiveSessionId) || sessions[0];
+            if (lastSession) {
+                const lastCard = document.createElement('div');
+                lastCard.className = 'game-card';
+                lastCard.style.borderColor = '#7c3aed';
+                lastCard.style.maxWidth = '320px';
+                lastCard.onclick = function() { openGame(lastSession.name, lastSession.preset, lastSession.id); };
+                lastCard.innerHTML = `
+                    <div class="image-placeholder" style="background-image: url('${lastSession.img}');"></div>
+                    <div class="info">
+                        <div class="title">${lastSession.name}</div>
+                        <div class="subtitle">Режим: ${lastSession.preset}</div>
+                        <div class="meta"><span>Ход №${lastSession.turn}</span><span style="color: #34d399;">Текущая</span></div>
+                    </div>
+                `;
+                lastContainer.appendChild(lastCard);
+            }
+        }
 
         function initMap() {
             if (!map) {
-                // Жестко фиксируем верх и низ, но даем огромный запас по бокам для бесконечной прокрутки
                 const southWest = L.latLng(-85, -3600);
                 const northEast = L.latLng(85, 3600);
                 const bounds = L.latLngBounds(southWest, northEast);
@@ -391,7 +462,7 @@
                     minZoom: 2,
                     maxZoom: 6,
                     maxBounds: bounds,
-                    maxBoundsViscosity: 1.0, // Намертво блокирует прокрутку вверх/вниз
+                    maxBoundsViscosity: 1.0,
                     worldCopyJump: true
                 });
             }
@@ -399,14 +470,15 @@
 
         function updateMapStyle() {
             map.eachLayer(layer => map.removeLayer(layer));
-
-            // Загружаем темную подложку Modern Day
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
                 noWrap: false
             }).addTo(map);
         }
 
         function switchScreen(screenId) {
+            currentScreen = screenId;
+            saveToStorage();
+
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
             
@@ -415,47 +487,55 @@
             if(btn) btn.classList.add('active');
         }
 
-        function openGame(name, scenario) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('active-game-title').innerText = name;
-            
-            document.getElementById('game-date-display').innerText = "1 января 2016";
-            document.getElementById('order-input').value = '';
-            document.getElementById('orders-log-container').innerHTML = '<div style="color: #71717a; text-align: center; font-size: 0.75rem; padding: 10px; border: 1px dashed #232327;">Приказы еще не отправлялись.</div>';
-            document.getElementById('game-status-text').innerText = 'Ход открыт';
-            document.getElementById('game-status-text').style.color = '#34d399';
+        function openGame(name, scenario, id) {
+            lastActiveSessionId = id;
+            switchScreen('play-screen');
 
-            document.getElementById('play-screen').classList.add('active');
+            document.getElementById('active-game-title').innerText = name;
+            document.getElementById('game-date-display').innerText = "1 января 2016";
+            
+            // Подгружаем логи приказов конкретно для этой сессии
+            const savedOrders = localStorage.getItem(`vpi_orders_${id}`);
+            const logContainer = document.getElementById('orders-log-container');
+            if (savedOrders) {
+                logContainer.innerHTML = savedOrders;
+                document.getElementById('game-status-text').innerText = 'Приказ на обработке ⏳';
+                document.getElementById('game-status-text').style.color = '#f59e0b';
+            } else {
+                logContainer.innerHTML = '<div style="color: #71717a; text-align: center; font-size: 0.75rem; padding: 10px; border: 1px dashed #232327;">Приказы еще не отправлялись.</div>';
+                document.getElementById('game-status-text').innerText = 'Ход открыт';
+                document.getElementById('game-status-text').style.color = '#34d399';
+            }
 
             initMap();
             updateMapStyle();
             
             setTimeout(() => { map.invalidateSize(); }, 100);
+            renderSessions(); // Перерисовываем карточки, чтобы обновить фиолетовую рамку текущей сессии
         }
 
         function closeGame() {
             switchScreen('section-games');
+            renderSessions();
         }
 
         function createNewSession(presetName, imageUrl) {
-            const grid = document.getElementById('active-sessions-grid');
-            const sessionCount = grid.querySelectorAll('.game-card').length + 1;
-            const sessionName = `Modern Day Сессия #${sessionCount}`;
+            const newId = Date.now(); // Уникальный ID
+            const sessionName = `Modern Day Партия #${sessions.length + 1}`;
             
-            const newCard = document.createElement('div');
-            newCard.className = 'game-card';
-            newCard.style.borderColor = '#232327';
-            newCard.onclick = function() { openGame(sessionName, presetName); };
-            newCard.innerHTML = `
-                <div class="image-placeholder" style="background-image: url('${imageUrl}');"></div>
-                <div class="info">
-                    <div class="title">${sessionName}</div>
-                    <div class="subtitle">Режим: Modern Day</div>
-                    <div class="meta"><span>Ход №1</span><span style="color: #34d399;">Новая</span></div>
-                </div>
-            `;
-            grid.appendChild(newCard);
-            openGame(sessionName, presetName);
+            const newSession = {
+                id: newId,
+                name: sessionName,
+                preset: presetName,
+                img: imageUrl,
+                turn: 1
+            };
+            
+            sessions.push(newSession);
+            lastActiveSessionId = newId;
+            saveToStorage();
+            
+            openGame(sessionName, presetName, newId);
         }
 
         function submitVpiOrder() {
@@ -476,6 +556,10 @@
                 <div style="color: #e4e4e7;">${input.value}</div>
             `;
             logContainer.insertBefore(orderItem, logContainer.firstChild);
+            
+            // Сохраняем логи приказов именно для этой сессии
+            localStorage.setItem(`vpi_orders_${lastActiveSessionId}`, logContainer.innerHTML);
+            
             statusText.innerText = 'Приказ на обработке ⏳';
             statusText.style.color = '#f59e0b';
             input.value = '';
