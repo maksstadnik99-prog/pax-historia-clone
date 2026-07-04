@@ -171,7 +171,7 @@
             top: 0;
             left: 0;
             z-index: 1;
-            background-color: #0b111e; /* Темный глубокий океан */
+            background-color: #0b111e;
         }
 
         /* ИНТЕРФЕЙС ПОВЕРХ КАРТЫ */
@@ -271,7 +271,7 @@
         }
         .order-item .time { color: #71717a; font-size: 0.7rem; margin-bottom: 2px; }
         
-        /* Скрываем лишний мусор Leaflet */
+        /* Скрываем элементы управления Leaflet */
         .leaflet-control-zoom, .leaflet-control-attribution {
             display: none !important;
         }
@@ -301,7 +301,7 @@
         <!-- ЭКРАН 1: СПИСОК ИГР -->
         <div id="section-games" class="screen active">
             <div class="scrollable-content">
-                <h1>Ваши активные партии</h1>
+                <h1>Ваши active партии</h1>
                 <h2>Продолжить текущую сессию</h2>
                 <div class="games-grid" id="active-sessions-grid">
                     <div onclick="openGame('Наша ВПИ Партия', 'Modern Day')" class="game-card" style="border-color: #7c3aed;">
@@ -316,7 +316,6 @@
 
                 <h2>Создать новую сессию</h2>
                 <div class="games-grid">
-                    <!-- Теперь кнопка сразу создает сессию Modern Day без лишнего шага -->
                     <div onclick="createNewSession('Modern Day', 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500&q=80')" class="add-card">
                         <div style="text-align: center;">
                             <span style="font-size: 1.5rem; color: #71717a;">+</span>
@@ -327,7 +326,7 @@
             </div>
         </div>
 
-        <!-- ЭКРАН 2: ПРЕСЕТЫ (Здесь теперь только Modern Day) -->
+        <!-- ЭКРАН 2: ПРЕСЕТЫ -->
         <div id="presets-screen" class="screen">
             <div class="scrollable-content">
                 <h1>Доступные эпохи</h1>
@@ -344,7 +343,7 @@
             </div>
         </div>
 
-        <!-- ЭКРАН 3: ИГРОВОЙ ЭКРАН С БЕСКОНЕЧНОЙ КАРТОЙ -->
+        <!-- ЭКРАН 3: ИГРОВОЙ ЭКРАН -->
         <div id="play-screen" class="screen">
             <div class="back-widget" onclick="closeGame()">← Покинуть сессию</div>
 
@@ -381,13 +380,19 @@
 
         function initMap() {
             if (!map) {
-                // Настраиваем карту БЕЗ жестких границ по краям, чтобы она листалась бесконечно
+                // Жестко фиксируем верх и низ, но даем огромный запас по бокам для бесконечной прокрутки
+                const southWest = L.latLng(-85, -3600);
+                const northEast = L.latLng(85, 3600);
+                const bounds = L.latLngBounds(southWest, northEast);
+
                 map = L.map('map-container', {
                     center: [30, 0],
                     zoom: 2,
                     minZoom: 2,
                     maxZoom: 6,
-                    worldCopyJump: true // Автоматически переносит фокус при переходе через 180 меридиан
+                    maxBounds: bounds,
+                    maxBoundsViscosity: 1.0, // Намертво блокирует прокрутку вверх/вниз
+                    worldCopyJump: true
                 });
             }
         }
@@ -395,10 +400,9 @@
         function updateMapStyle() {
             map.eachLayer(layer => map.removeLayer(layer));
 
-            // Загружаем стильную темную политическую подложку (Modern Day)
+            // Загружаем темную подложку Modern Day
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-                noWrap: false, // Разрешаем карте циклично повторяться по горизонтали
-                bounds: [[-85, -180], [85, 180]] // Ограничиваем только полюса (чтобы не улетать в серую пустоту)
+                noWrap: false
             }).addTo(map);
         }
 
