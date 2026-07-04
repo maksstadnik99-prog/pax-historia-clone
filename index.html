@@ -137,7 +137,6 @@
 
         .game-card:hover { border-color: #3f3f46; background-color: #18181b; }
         
-        /* КНОПКИ УПРАВЛЕНИЯ НА КАРТОЧКЕ */
         .card-controls {
             position: absolute;
             top: 10px;
@@ -163,16 +162,8 @@
             backdrop-filter: blur(4px);
         }
 
-        .card-btn:hover {
-            color: #fff;
-            background-color: #1c1c1f;
-        }
-
-        .card-btn.btn-delete:hover {
-            color: #ef4444;
-            border-color: #ef4444;
-            background-color: rgba(239, 68, 68, 0.1);
-        }
+        .card-btn:hover { color: #fff; background-color: #1c1c1f; }
+        .card-btn.btn-delete:hover { color: #ef4444; border-color: #ef4444; background-color: rgba(239, 68, 68, 0.1); }
 
         .game-card .image-placeholder {
             height: 140px;
@@ -210,7 +201,7 @@
             top: 0;
             left: 0;
             z-index: 1;
-            background-color: #0b111e;
+            background-color: #0d1117;
         }
 
         /* ИНТЕРФЕЙС ПОВЕРХ КАРТЫ */
@@ -248,6 +239,23 @@
             transition: 0.2s;
         }
         .back-widget:hover { color: #fff; background-color: #141417; }
+
+        /* ИНФО-ПАНЕЛЬ СТРАНЫ ПРИ НАВЕДЕНИИ */
+        .country-info-badge {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(12, 12, 14, 0.85);
+            border: 1px solid #232327;
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            pointer-events: none; /* Чтобы не мешал кликам по карте */
+            display: none;
+        }
 
         .floating-sidebar {
             position: absolute;
@@ -310,7 +318,6 @@
         }
         .order-item .time { color: #71717a; font-size: 0.7rem; margin-bottom: 2px; }
         
-        /* Скрываем элементы управления Leaflet */
         .leaflet-control-zoom, .leaflet-control-attribution {
             display: none !important;
         }
@@ -390,6 +397,9 @@
             <!-- Контейнер карты -->
             <div id="map-container"></div>
 
+            <!-- Виджет инфо о стране -->
+            <div id="country-badge" class="country-info-badge">Страна: <span id="country-badge-name" style="font-weight: 600;">-</span></div>
+
             <!-- Панель приказов -->
             <div class="floating-sidebar">
                 <h3 id="active-game-title" style="margin: 0; font-size: 1rem; color: #fff;">Партия</h3>
@@ -411,8 +421,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map;
+        let geojsonLayer; // Слой политических границ
         
-        // База данных сессий
         let sessions = JSON.parse(localStorage.getItem('vpi_sessions')) || [
             { id: 1, name: 'Наша ВПИ Партия Основная', preset: 'Modern Day', img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500&q=80', turn: 1 }
         ];
@@ -441,7 +451,6 @@
             localStorage.setItem('vpi_current_screen', currentScreen);
         }
 
-        // Вспомогательный генератор HTML для кнопок управления карточкой
         function getCardControlsHtml(id) {
             return `
                 <div class="card-controls" onclick="event.stopPropagation();">
@@ -464,7 +473,6 @@
                 return;
             }
 
-            // 1. Рендерим ВСЕ сессии
             sessions.forEach(session => {
                 const card = document.createElement('div');
                 card.className = 'game-card';
@@ -482,10 +490,8 @@
                 allGrid.appendChild(card);
             });
 
-            // 2. Рендерим ПОСЛЕДНЮЮ запущенную сессию
             const lastSession = sessions.find(s => s.id == lastActiveSessionId) || sessions[0];
             if (lastSession) {
-                // Если вдруг ID сбился, фиксируем реальный
                 if (lastActiveSessionId != lastSession.id) {
                     lastActiveSessionId = lastSession.id;
                     localStorage.setItem('vpi_last_session_id', lastActiveSessionId);
@@ -509,7 +515,6 @@
             }
         }
 
-        // Функция РЕДАКТИРОВАНИЯ названия
         function editSessionName(id) {
             const session = sessions.find(s => s.id === id);
             if (!session) return;
@@ -519,37 +524,29 @@
                 session.name = newName.trim();
                 saveToStorage();
                 renderSessions();
-                
-                // Если мы редактируем ту игру, которая сейчас открыта, меняем заголовок и в интерфейсе карты
                 if (id == lastActiveSessionId) {
-                    const titleEl = document.getElementById('active-game-title');
-                    if (titleEl) titleEl.innerText = session.name;
+                    document.getElementById('active-game-title').innerText = session.name;
                 }
             }
         }
 
-        // Функция УДАЛЕНИЯ сессии
         function deleteSession(id) {
             const session = sessions.find(s => s.id === id);
             if (!session) return;
 
-            const confirmDelete = confirm(`Вы уверены, что хотите удалить сессию "${session.name}"? Все приказы будут стерты.`);
+            const confirmDelete = confirm(`Вы уверены, что хотите удалить сессию "${session.name}"?`);
             if (confirmDelete) {
-                // Удаляем саму сессию из массива
                 sessions = sessions.filter(s => s.id !== id);
-                // Очищаем связанные логи ходов из localStorage
                 localStorage.removeItem(`vpi_orders_${id}`);
-
-                // Корректируем указатель на последнюю активную сессию
                 if (lastActiveSessionId == id) {
                     lastActiveSessionId = sessions.length > 0 ? sessions[0].id : null;
                 }
-
                 saveToStorage();
                 renderSessions();
             }
         }
 
+        // Инициализация базовой карты
         function initMap() {
             if (!map) {
                 const southWest = L.latLng(-85, -3600);
@@ -568,11 +565,77 @@
             }
         }
 
+        // РАЗУКРАШИВАНИЕ КАРТЫ СТРАН С ПОМОЩЬЮ GEOJSON
         function updateMapStyle() {
             map.eachLayer(layer => map.removeLayer(layer));
+
+            // Базовый черный океан без делений
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
                 noWrap: false
             }).addTo(map);
+
+            // Генератор случайного, но стабильного цвета по названию страны (чтобы у каждой фракции был свой цвет)
+            function getCountryColor(name) {
+                let hash = 0;
+                for (let i = 0; i < name.length; i++) {
+                    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+                return "#" + "00000".substring(0, 6 - c.length) + c;
+            }
+
+            // Функция стилизации границ и заливки стран
+            function styleCountry(feature) {
+                const countryName = feature.properties.name || "Неизвестно";
+                return {
+                    fillColor: getCountryColor(countryName), // Цвет страны
+                    weight: 1.5,                             // Толщина границ
+                    opacity: 1,                              // Прозрачность границ
+                    color: '#1e293b',                        // Цвет линий границ (темно-серый)
+                    fillOpacity: 0.55                         // Прозрачность заливки фракций
+                };
+            }
+
+            // Эффекты при наведении мыши на страну
+            function onEachFeature(feature, layer) {
+                layer.on({
+                    mouseover: function (e) {
+                        const layer = e.target;
+                        layer.setStyle({
+                            fillOpacity: 0.85,      // Делаем страну ярче при наведении
+                            weight: 2,
+                            color: '#fff'           // Белая граница фокуса
+                        });
+                        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                            layer.bringToFront();
+                        }
+                        
+                        // Показываем плашку с названием страны в левом нижнем углу
+                        const name = feature.properties.name || "Unknown";
+                        document.getElementById('country-badge-name').innerText = name;
+                        document.getElementById('country-badge').style.display = 'block';
+                    },
+                    mouseout: function (e) {
+                        geojsonLayer.resetStyle(e.target); // Возвращаем стандартный цвет
+                        document.getElementById('country-badge').style.display = 'none'; // Скрываем плашку
+                    },
+                    click: function (e) {
+                        // Камера центрируется на выбранном государстве при клике
+                        map.panTo(e.latlng);
+                    }
+                });
+            }
+
+            // Подгружаем гео-карту мира низкого разрешения (чтобы загружалась мгновенно на любом интернете)
+            fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
+                .then(response => response.json())
+                .then(data => {
+                    geojsonLayer = L.geoJSON(data, {
+                        style: styleCountry,
+                        onEachFeature: onEachFeature
+                    }).addTo(map);
+                })
+                .catch(err => console.error("Ошибка загрузки карты стран:", err));
         }
 
         function switchScreen(screenId) {
