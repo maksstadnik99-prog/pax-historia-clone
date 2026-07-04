@@ -132,16 +132,55 @@
             overflow: hidden;
             transition: 0.2s;
             cursor: pointer;
+            position: relative;
         }
 
         .game-card:hover { border-color: #3f3f46; background-color: #18181b; }
+        
+        /* КНОПКИ УПРАВЛЕНИЯ НА КАРТОЧКЕ */
+        .card-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+        }
+
+        .card-btn {
+            width: 28px;
+            height: 28px;
+            background-color: rgba(12, 12, 14, 0.75);
+            border: 1px solid #232327;
+            border-radius: 6px;
+            color: #a1a1aa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            backdrop-filter: blur(4px);
+        }
+
+        .card-btn:hover {
+            color: #fff;
+            background-color: #1c1c1f;
+        }
+
+        .card-btn.btn-delete:hover {
+            color: #ef4444;
+            border-color: #ef4444;
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
         .game-card .image-placeholder {
             height: 140px;
             background-size: cover;
             background-position: center;
         }
         .game-card .info { padding: 16px; }
-        .game-card .title { font-weight: 600; color: #fff; margin-bottom: 4px; }
+        .game-card .title { font-weight: 600; color: #fff; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 8px;}
         .game-card .subtitle { font-size: 0.85rem; color: #a1a1aa; margin-bottom: 12px; }
         .game-card .meta { font-size: 0.75rem; color: #71717a; display: flex; justify-content: space-between; }
 
@@ -304,11 +343,9 @@
                 <h1>Ваши активные партии</h1>
                 
                 <h2>Продолжить текущую сессию</h2>
-                <!-- Сюда JS выведет ОДНУ самую последнюю запущенную партию -->
                 <div class="games-grid" id="last-session-container"></div>
 
                 <h2>Все созданные сессии</h2>
-                <!-- Сюда JS выведет вообще все сессии, которые ты насоздавал -->
                 <div class="games-grid" id="all-sessions-grid" style="margin-bottom: 32px;"></div>
 
                 <h2>Создать новую сессию</h2>
@@ -375,19 +412,17 @@
     <script>
         let map;
         
-        // База данных сессий (подгружается из памяти браузера)
+        // База данных сессий
         let sessions = JSON.parse(localStorage.getItem('vpi_sessions')) || [
             { id: 1, name: 'Наша ВПИ Партия Основная', preset: 'Modern Day', img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500&q=80', turn: 1 }
         ];
         
-        let lastActiveSessionId = localStorage.getItem('vpi_last_session_id') || null;
+        let lastActiveSessionId = localStorage.getItem('vpi_last_session_id') || 1;
         let currentScreen = localStorage.getItem('vpi_current_screen') || 'section-games';
 
-        // Инициализация при старте страницы
         window.onload = function() {
             renderSessions();
             
-            // Восстанавливаем состояние экрана, на котором пользователь был до F5
             if (currentScreen === 'play-screen' && lastActiveSessionId) {
                 const session = sessions.find(s => s.id == lastActiveSessionId);
                 if (session) {
@@ -406,6 +441,16 @@
             localStorage.setItem('vpi_current_screen', currentScreen);
         }
 
+        // Вспомогательный генератор HTML для кнопок управления карточкой
+        function getCardControlsHtml(id) {
+            return `
+                <div class="card-controls" onclick="event.stopPropagation();">
+                    <div class="card-btn" onclick="editSessionName(${id})" title="Переименовать">✏️</div>
+                    <div class="card-btn btn-delete" onclick="deleteSession(${id})" title="Удалить">🗑️</div>
+                </div>
+            `;
+        }
+
         function renderSessions() {
             const allGrid = document.getElementById('all-sessions-grid');
             const lastContainer = document.getElementById('last-session-container');
@@ -413,13 +458,20 @@
             allGrid.innerHTML = '';
             lastContainer.innerHTML = '';
 
-            // 1. Выводим список ВСЕХ созданных сессий
+            if (sessions.length === 0) {
+                allGrid.innerHTML = '<div style="color: #71717a; font-size: 0.9rem; padding: 20px;">У вас пока нет созданных сессий.</div>';
+                lastContainer.innerHTML = '<div style="color: #71717a; font-size: 0.9rem; padding: 20px;">Нет активной сессии.</div>';
+                return;
+            }
+
+            // 1. Рендерим ВСЕ сессии
             sessions.forEach(session => {
                 const card = document.createElement('div');
                 card.className = 'game-card';
                 if (lastActiveSessionId == session.id) card.style.borderColor = '#7c3aed';
                 card.onclick = function() { openGame(session.name, session.preset, session.id); };
                 card.innerHTML = `
+                    ${getCardControlsHtml(session.id)}
                     <div class="image-placeholder" style="background-image: url('${session.img}');"></div>
                     <div class="info">
                         <div class="title">${session.name}</div>
@@ -430,15 +482,22 @@
                 allGrid.appendChild(card);
             });
 
-            // 2. Выводим ПОСЛЕДНЮЮ активную сессию в верхний блок
+            // 2. Рендерим ПОСЛЕДНЮЮ запущенную сессию
             const lastSession = sessions.find(s => s.id == lastActiveSessionId) || sessions[0];
             if (lastSession) {
+                // Если вдруг ID сбился, фиксируем реальный
+                if (lastActiveSessionId != lastSession.id) {
+                    lastActiveSessionId = lastSession.id;
+                    localStorage.setItem('vpi_last_session_id', lastActiveSessionId);
+                }
+
                 const lastCard = document.createElement('div');
                 lastCard.className = 'game-card';
                 lastCard.style.borderColor = '#7c3aed';
                 lastCard.style.maxWidth = '320px';
                 lastCard.onclick = function() { openGame(lastSession.name, lastSession.preset, lastSession.id); };
                 lastCard.innerHTML = `
+                    ${getCardControlsHtml(lastSession.id)}
                     <div class="image-placeholder" style="background-image: url('${lastSession.img}');"></div>
                     <div class="info">
                         <div class="title">${lastSession.name}</div>
@@ -447,6 +506,47 @@
                     </div>
                 `;
                 lastContainer.appendChild(lastCard);
+            }
+        }
+
+        // Функция РЕДАКТИРОВАНИЯ названия
+        function editSessionName(id) {
+            const session = sessions.find(s => s.id === id);
+            if (!session) return;
+
+            const newName = prompt('Введите новое название для сессии:', session.name);
+            if (newName && newName.trim() !== '') {
+                session.name = newName.trim();
+                saveToStorage();
+                renderSessions();
+                
+                // Если мы редактируем ту игру, которая сейчас открыта, меняем заголовок и в интерфейсе карты
+                if (id == lastActiveSessionId) {
+                    const titleEl = document.getElementById('active-game-title');
+                    if (titleEl) titleEl.innerText = session.name;
+                }
+            }
+        }
+
+        // Функция УДАЛЕНИЯ сессии
+        function deleteSession(id) {
+            const session = sessions.find(s => s.id === id);
+            if (!session) return;
+
+            const confirmDelete = confirm(`Вы уверены, что хотите удалить сессию "${session.name}"? Все приказы будут стерты.`);
+            if (confirmDelete) {
+                // Удаляем саму сессию из массива
+                sessions = sessions.filter(s => s.id !== id);
+                // Очищаем связанные логи ходов из localStorage
+                localStorage.removeItem(`vpi_orders_${id}`);
+
+                // Корректируем указатель на последнюю активную сессию
+                if (lastActiveSessionId == id) {
+                    lastActiveSessionId = sessions.length > 0 ? sessions[0].id : null;
+                }
+
+                saveToStorage();
+                renderSessions();
             }
         }
 
@@ -494,7 +594,6 @@
             document.getElementById('active-game-title').innerText = name;
             document.getElementById('game-date-display').innerText = "1 января 2016";
             
-            // Подгружаем логи приказов конкретно для этой сессии
             const savedOrders = localStorage.getItem(`vpi_orders_${id}`);
             const logContainer = document.getElementById('orders-log-container');
             if (savedOrders) {
@@ -511,7 +610,7 @@
             updateMapStyle();
             
             setTimeout(() => { map.invalidateSize(); }, 100);
-            renderSessions(); // Перерисовываем карточки, чтобы обновить фиолетовую рамку текущей сессии
+            renderSessions();
         }
 
         function closeGame() {
@@ -520,7 +619,7 @@
         }
 
         function createNewSession(presetName, imageUrl) {
-            const newId = Date.now(); // Уникальный ID
+            const newId = Date.now();
             const sessionName = `Modern Day Партия #${sessions.length + 1}`;
             
             const newSession = {
@@ -557,7 +656,6 @@
             `;
             logContainer.insertBefore(orderItem, logContainer.firstChild);
             
-            // Сохраняем логи приказов именно для этой сессии
             localStorage.setItem(`vpi_orders_${lastActiveSessionId}`, logContainer.innerHTML);
             
             statusText.innerText = 'Приказ на обработке ⏳';
