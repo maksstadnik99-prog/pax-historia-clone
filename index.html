@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pax Historia — Игровой лаунчер</title>
+    <!-- Подключаем стили для интерактивной карты Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         /* ОБЩИЕ СТИЛИ (ПОЛНОЭКРАННЫЙ РЕЖИМ) */
         html, body {
@@ -14,7 +16,7 @@
             background-color: #09090b;
             color: #f4f4f5;
             font-family: 'Segoe UI', system-ui, sans-serif;
-            overflow: hidden; /* Отключаем общую прокрутку страницы */
+            overflow: hidden;
         }
 
         /* ШАПКА В ТОЧНОСТИ КАК НА СКРИНШОТЕ */
@@ -30,7 +32,7 @@
             top: 0;
             left: 0;
             right: 0;
-            z-index: 100;
+            z-index: 1000; /* Поверх карты */
             box-sizing: border-box;
         }
 
@@ -42,11 +44,6 @@
             font-size: 1.1rem;
             color: #fff;
             cursor: pointer;
-        }
-
-        .header-left img {
-            width: 24px;
-            height: 24px;
         }
 
         header nav {
@@ -111,7 +108,7 @@
             display: block;
         }
 
-        /* СТИЛИ ДЛЯ ОБЫЧНЫХ СТРАНИЦ (ИГРЫ, ПРЕСЕТЫ) */
+        /* СТИЛИ ДЛЯ ОБЫЧНЫХ СТРАНИЦ */
         .scrollable-content {
             width: 100%;
             height: 100%;
@@ -161,27 +158,25 @@
         }
         .add-card:hover { border-color: #3f3f46; background-color: #141417; }
 
-        /* ИГРОВОЙ ЭКРАН: КАРТА НА ВЕСЬ ЭКРАН */
+        /* ИГРОВОЙ ЭКРАН: НАСТОЯЩАЯ КАРТА НА ВЕСЬ ЭКРАН */
         #play-screen {
             width: 100%;
             height: 100%;
             position: relative;
         }
 
-        /* Карта как бесконечный полноэкранный фон */
-        .fullscreen-map {
+        /* Контейнер интерактивного движка карты */
+        #map-container {
             width: 100%;
             height: 100%;
-            background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80'); /* Временная стильная подложка, заменяемая на карту */
-            background-size: cover;
-            background-position: center;
             position: absolute;
             top: 0;
             left: 0;
             z-index: 1;
+            background-color: #0f172a; /* Цвет океана по умолчанию */
         }
 
-        /* Виджет даты сверху справа (как на скриншоте) */
+        /* Виджет даты сверху справа */
         .date-widget {
             position: absolute;
             top: 20px;
@@ -193,11 +188,12 @@
             font-size: 0.9rem;
             font-weight: 500;
             color: #fff;
-            z-index: 10;
+            z-index: 100;
             backdrop-filter: blur(8px);
             display: flex;
             align-items: center;
             gap: 10px;
+            pointer-events: auto;
         }
 
         /* Кнопка выхода назад */
@@ -211,14 +207,14 @@
             border-radius: 6px;
             color: #a1a1aa;
             cursor: pointer;
-            z-index: 10;
+            z-index: 100;
             backdrop-filter: blur(8px);
             font-size: 0.9rem;
             transition: 0.2s;
         }
         .back-widget:hover { color: #fff; background-color: #141417; }
 
-        /* Компактная плавающая панель приказов (Судья / Управление) */
+        /* Компактная плавающая панель приказов */
         .floating-sidebar {
             position: absolute;
             bottom: 20px;
@@ -229,7 +225,7 @@
             border-radius: 10px;
             padding: 16px;
             box-sizing: border-box;
-            z-index: 10;
+            z-index: 100;
             backdrop-filter: blur(10px);
             display: flex;
             flex-direction: column;
@@ -279,6 +275,11 @@
             padding: 8px;
         }
         .order-item .time { color: #71717a; font-size: 0.7rem; margin-bottom: 2px; }
+        
+        /* Скрываем стандартные элементы управления Leaflet для чистоты интерфейса ВПИ */
+        .leaflet-control-zoom, .leaflet-control-attribution {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -360,17 +361,17 @@
             <!-- Кнопка назад -->
             <div class="back-widget" onclick="closeGame()">← Покинуть сессию</div>
 
-            <!-- Индикатор Даты из оригинала -->
+            <!-- Индикатор Даты -->
             <div class="date-widget">
                 <span>◀</span>
-                <span id="game-date-display">1 января 2026</span>
+                <span id="game-date-display">1 января 2016</span>
                 <span>▶</span>
             </div>
 
-            <!-- ПОЛНОЭКРАННАЯ ТЕКСТУРНАЯ КАРТА -->
-            <div class="fullscreen-map" id="game-map-render"></div>
+            <!-- ДВИЖОК НАСТОЯЩЕЙ ИНТЕРАКТИВНОЙ КАРТЫ -->
+            <div id="map-container"></div>
 
-            <!-- Компактная панель управления ходом прямо поверх карты -->
+            <!-- Панель управления ходом поверх карты -->
             <div class="floating-sidebar">
                 <h3 id="active-game-title" style="margin: 0; font-size: 1rem; color: #fff;">Партия</h3>
                 <div style="font-size: 0.8rem; color: #a1a1aa;">Статус: <strong id="game-status-text" style="color: #34d399;">Ход открыт</strong></div>
@@ -387,7 +388,44 @@
 
     </div>
 
+    <!-- Скрипт движка Leaflet.js -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        let map; // Глобальная переменная для карты
+
+        function initMap() {
+            // Создаем карту, если она еще не создана
+            if (!map) {
+                map = L.map('map-container', {
+                    center: [30, 0],
+                    zoom: 2,
+                    minZoom: 2,
+                    maxZoom: 6,
+                    maxBounds: [[-85, -180], [85, 180]],
+                    maxBoundsViscosity: 1.0
+                });
+            }
+        }
+
+        function updateMapStyle(scenario) {
+            // Удаляем старые слои карты, если они есть
+            map.eachLayer(layer => map.removeLayer(layer));
+
+            let layerUrl;
+            
+            if (scenario.includes('World War 2')) {
+                // Исторический ретро-стиль под ВМВ
+                layerUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png';
+            } else {
+                // Темный неоновый/политический стиль как в оригинале Modern Day
+                layerUrl = 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png';
+            }
+
+            L.tileLayer(layerUrl, {
+                noWrap: false
+            }).addTo(map);
+        }
+
         function switchScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
@@ -401,18 +439,12 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('active-game-title').innerText = name;
             
-            // Динамически меняем дату и карту под выбранный сценарий, как на скрине!
             const dateDisplay = document.getElementById('game-date-display');
-            const mapRender = document.getElementById('game-map-render');
 
             if(scenario.includes('World War 2')) {
                 dateDisplay.innerText = "1 сентября 1939";
-                // Карта в стиле ВМВ (ретро/политическая)
-                mapRender.style.backgroundImage = "url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1920&q=80')";
             } else {
-                dateDisplay.innerText = "1 января 2026";
-                // Карта Modern Day в синих тонах океана как на скрине
-                mapRender.style.backgroundImage = "url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80')";
+                dateDisplay.innerText = "1 января 2016";
             }
 
             document.getElementById('order-input').value = '';
@@ -421,6 +453,13 @@
             document.getElementById('game-status-text').style.color = '#34d399';
 
             document.getElementById('play-screen').classList.add('active');
+
+            // Инициализируем движок карты и обновляем его подложку
+            initMap();
+            updateMapStyle(scenario);
+            
+            // Триггерим перерасчет размеров карты, чтобы она правильно отобразилась на весь экран
+            setTimeout(() => { map.invalidateSize(); }, 100);
         }
 
         function closeGame() {
@@ -439,7 +478,7 @@
             newCard.innerHTML = `
                 <div class="image-placeholder" style="background-image: url('${imageUrl}');"></div>
                 <div class="info">
-                    <div class="title">${sessionName}</div>
+                    <div class="title"> ${sessionName}</div>
                     <div class="subtitle">Режим: ${presetName}</div>
                     <div class="meta"><span>Ход №1</span><span style="color: #34d399;">Новая</span></div>
                 </div>
@@ -462,7 +501,7 @@
             const orderItem = document.createElement('div');
             orderItem.className = 'order-item';
             orderItem.innerHTML = `
-                <div class="time">Вчера в ${timeString} • На проверке</div>
+                <div class="time">Сегодня в ${timeString} • На проверке</div>
                 <div style="color: #e4e4e7;">${input.value}</div>
             `;
             logContainer.insertBefore(orderItem, logContainer.firstChild);
