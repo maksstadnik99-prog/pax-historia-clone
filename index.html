@@ -68,7 +68,7 @@
             flex-grow: 1;
             padding: 40px 40px; 
             width: 100%;
-            max-width: 1400px; 
+            max-width: 1600px; 
             margin-left: 0; 
             margin-right: auto;
             box-sizing: border-box;
@@ -178,14 +178,14 @@
         }
 
         .game-map {
-            flex: 2;
+            flex: 2.5;
             background-color: #141417;
             border: 1px solid #232327;
             border-radius: 10px;
-            min-height: 500px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            min-height: 600px;
+            height: 65vh;
+            overflow: hidden;
+            position: relative;
         }
 
         .game-sidebar {
@@ -197,7 +197,9 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            max-height: 600px;
+            height: 65vh;
+            min-height: 600px;
+            box-sizing: border-box;
             overflow-y: auto;
         }
 
@@ -372,11 +374,14 @@
             <p id="active-game-scen" style="color: #a1a1aa; margin-top: -15px; margin-bottom: 30px;">Сценарий</p>
 
             <div class="game-layout">
+                <!-- ОБНОВЛЕННЫЙ БЛОК С ИНТЕРАКТИВНЫМ IFRAME -->
                 <div class="game-map">
-                    <div style="text-align: center; padding: 20px;">
-                        <div style="color: #666; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;">⚔️ ВОЕННО-ПОЛИТИЧЕСКАЯ КАРТА СЕССИИ</div>
-                        <div style="font-size: 0.85rem; color: #444;">Используйте панель справа для отправки приказов вашего государства.</div>
-                    </div>
+                    <iframe 
+                        id="vpi-map-frame"
+                        src="https://www.paxhistoria.co/game/d8d6591c-a5c9-4a51-b19f-ef9533899338?round=1" 
+                        style="width: 100%; height: 100%; border: none; background-color: #141417;"
+                        allowfullscreen>
+                    </iframe>
                 </div>
 
                 <div class="game-sidebar">
@@ -385,7 +390,7 @@
                     
                     <hr style="border: 0; border-top: 1px solid #232327; width: 100%; margin: 5px 0;">
                     
-                    <!-- Интерактивная форма для ВПИ приказов -->
+                    <!-- Форма для ВПИ приказов -->
                     <div style="display: flex; flex-direction: column; gap: 8px;">
                         <label style="font-size: 0.8rem; color: #a1a1aa; font-weight: 500;">Ваш игровой приказ на этот ход:</label>
                         <textarea id="order-input" class="order-textarea" placeholder="Пример: Инвестировать 30% бюджета в ВПК. Начать развертывание дивизий на западной границе..."></textarea>
@@ -396,7 +401,6 @@
 
                     <h4 style="margin: 0; color: #e4e4e7; font-size: 0.9rem; font-weight: 500;">История приказов этой сессии:</h4>
                     <div id="orders-log-container" class="orders-log">
-                        <!-- Сюда будут падать приказы -->
                         <div class="order-item" style="color: #71717a; text-align: center; border-style: dashed;">
                             История пуста. Напишите свой первый приказ выше!
                         </div>
@@ -427,7 +431,6 @@
             document.getElementById('active-game-title').innerText = name;
             document.getElementById('active-game-scen').innerText = "Текущий режим: " + scenario;
             
-            // Сбрасываем форму при открытии игры
             document.getElementById('order-input').value = '';
             document.getElementById('game-status-text').innerText = 'Ход открыт';
             document.getElementById('game-status-text').style.color = '#34d399';
@@ -473,7 +476,6 @@
             openGame(sessionName, presetName);
         }
 
-        // Новая логика отправки приказов
         function submitVpiOrder() {
             const input = document.getElementById('order-input');
             const logContainer = document.getElementById('orders-log-container');
@@ -484,12 +486,10 @@
                 return;
             }
 
-            // Очищаем дефолтную заглушку "История пуста", если это первый ход
             if (logContainer.querySelector('.order-item[style*="dashed"]')) {
                 logContainer.innerHTML = '';
             }
 
-            // Создаем новый элемент лога
             const now = new Date();
             const timeString = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
             
@@ -500,14 +500,9 @@
                 <div style="color: #e4e4e7; line-height: 1.4;">${input.value.replace(/\n/g, '<br>')}</div>
             `;
 
-            // Добавляем наверх лога
             logContainer.insertBefore(orderItem, logContainer.firstChild);
-
-            // Меняем статус игры
             statusText.innerText = 'Приказ на рассмотрении ⏳';
-            statusText.style.color = '#f59e0b'; // Оранжевый цвет ожидания
-
-            // Очищаем поле ввода
+            statusText.style.color = '#f59e0b';
             input.value = '';
         }
     </script>
