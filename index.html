@@ -239,7 +239,7 @@
     <!-- ВЕРХНЕЕ МЕНЮ -->
     <header id="main-header">
         <nav>
-            <a onclick="switchScreen('games-screen')" id="btn-games" class="active">Игры</a>
+            <a onclick="switchScreen('section-games')" id="btn-games" class="active">Игры</a>
             <a onclick="switchScreen('presets-screen')" id="btn-presets">Пресеты</a>
         </nav>
     </header>
@@ -251,9 +251,10 @@
             <h1>Ваши игры</h1>
             
             <h2>Продолжить игру</h2>
-            <div class="games-grid">
+            <!-- Добавили id="active-sessions-grid" для управления через JS -->
+            <div class="games-grid" id="active-sessions-grid">
                 <!-- Текущая ВПИ партия -->
-                <div onclick="openGame('Наша RPG Сессия', 'Pax Historia Сеттинг')" class="game-card" style="border-color: #8b0000;">
+                <div onclick="openGame('Наша ВПИ Партия', 'Pax Historia')" class="game-card" style="border-color: #8b0000;">
                     <div class="image-placeholder" style="background-image: url('https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=500&q=80');"></div>
                     <div class="info">
                         <div class="title">Наша ВПИ Партия</div>
@@ -268,7 +269,7 @@
 
             <h2>Выбрать новый сценарий</h2>
             <div class="games-grid">
-                <!-- Плюсик -->
+                <!-- Плюсик теперь ведет на правильный ID экрана -->
                 <div onclick="switchScreen('presets-screen')" class="add-card" style="width: 280px;">
                     <div style="text-align: center; padding: 20px;">
                         <span style="font-size: 1.8rem; color: #71717a; font-weight: 300;">+</span>
@@ -285,7 +286,7 @@
             
             <div class="games-grid">
                 <!-- Сценарий 1: Modern Day -->
-                <div onclick="alert('Запуск сценария Modern Day...')" class="game-card">
+                <div onclick="createNewSession('Modern Day', 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500&q=80', 'hue-rotate(45deg)')" class="game-card">
                     <div class="image-placeholder" style="background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500&q=80'); filter: hue-rotate(45deg);"></div>
                     <div class="info">
                         <div class="title">Modern Day</div>
@@ -298,7 +299,7 @@
                 </div>
 
                 <!-- Сценарий 2: World War 2 -->
-                <div onclick="alert('Запуск сценария World War 2...')" class="game-card">
+                <div onclick="createNewSession('World War 2', 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=500&q=80', 'sepia(0.6) hue-rotate(-50deg)')" class="game-card">
                     <div class="image-placeholder" style="background-image: url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=500&q=80'); filter: sepia(0.6) hue-rotate(-50deg);"></div>
                     <div class="info">
                         <div class="title">World War 2</div>
@@ -328,12 +329,12 @@
 
                 <div class="game-sidebar">
                     <h3 style="margin: 0; color: #fff;">Панель управления</h3>
-                    <div style="font-size: 0.9rem; color: #a1a1aa;">Статус: <strong style="color: #ff4d4d;">Идет ход...</strong></div>
+                    <div style="font-size: 0.9rem; color: #a1a1aa;">Статус: <strong style="color: #34d399;">Ход открыт</strong></div>
                     <hr style="border: 0; border-top: 1px solid #232327; width: 100%;">
                     
-                    <div class="btn-action">✍️ Написать игровой приказ</div>
-                    <div class="btn-action">📊 Хронология событий</div>
-                    <div class="btn-action">🌍 Дипломатия</div>
+                    <div class="btn-action" onclick="alert('Окно написания приказа в разработке...')">✍️ Написать игровой приказ</div>
+                    <div class="btn-action" onclick="alert('История ходов формируется...')">📊 Хронология событий</div>
+                    <div class="btn-action" onclick="alert('Дипломатический корпус пуст...')">🌍 Дипломатия</div>
                 </div>
             </div>
         </div>
@@ -342,15 +343,18 @@
 
     <script>
         function switchScreen(screenId) {
+            // Прячем все экраны и сбрасываем активные ссылки
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
+            
+            // Всегда показываем шапку на главных экранах
             document.getElementById('main-header').style.display = 'flex';
 
-            if(screenId === 'games-screen') {
-                document.getElementById('section-games').classList.add('active');
+            // Активируем нужный экран и подсвечиваем кнопку меню
+            document.getElementById(screenId).classList.add('active');
+            if(screenId === 'section-games') {
                 document.getElementById('btn-games').classList.add('active');
-            } else {
-                document.getElementById('presets-screen').classList.add('active');
+            } else if(screenId === 'presets-screen') {
                 document.getElementById('btn-presets').classList.add('active');
             }
         }
@@ -364,7 +368,45 @@
         }
 
         function closeGame() {
-            switchScreen('games-screen');
+            switchScreen('section-games');
+        }
+
+        // Логика создания новой игровой сессии из пресета
+        function createNewSession(presetName, imageUrl, filterStyle) {
+            const grid = document.getElementById('active-sessions-grid');
+            
+            // Генерируем уникальное имя (например: World War 2 #1)
+            const sessionCount = grid.querySelectorAll('.game-card').length + 1;
+            const sessionName = `${presetName} #${sessionCount}`;
+            
+            // Создаем элемент новой карточки
+            const newCard = document.createElement('div');
+            newCard.className = 'game-card';
+            newCard.style.borderColor = '#3f3f46';
+            
+            // Вешаем событие открытия при клике
+            newCard.onclick = function() {
+                openGame(sessionName, presetName);
+            };
+
+            // Наполняем HTML внутренностями карточки
+            newCard.innerHTML = `
+                <div class="image-placeholder" style="background-image: url('${imageUrl}'); filter: ${filterStyle};"></div>
+                <div class="info">
+                    <div class="title">${sessionName}</div>
+                    <div class="subtitle">Сеттинг: Pax Historia</div>
+                    <div class="meta">
+                        <span>Генерация мира</span>
+                        <span>Новая игра</span>
+                    </div>
+                </div>
+            `;
+
+            // Добавляем карточку в список "Продолжить игру"
+            grid.appendChild(newCard);
+
+            // Сразу запускаем свежую сессию
+            openGame(sessionName, presetName);
         }
     </script>
 
